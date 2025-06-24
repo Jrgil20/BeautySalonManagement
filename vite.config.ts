@@ -7,14 +7,4 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
-  define: {
-    global: 'window',
-    'process.env': {},
-    Buffer: ['buffer', 'Buffer'],
-  },
-  resolve: {
-    alias: {
-      buffer: 'buffer/',
-    },
-  },
 });
