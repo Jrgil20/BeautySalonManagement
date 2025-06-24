@@ -166,7 +166,8 @@ export function Login() {
         </div>
 
         {/* Registered Accounts Panel */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
+        {showAccounts && (
+          <div className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Cuentas Registradas</h2>
             <div className="flex items-center text-sm text-gray-600">
@@ -251,6 +252,7 @@ export function Login() {
             </ul>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
