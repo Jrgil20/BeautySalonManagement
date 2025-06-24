@@ -19,7 +19,8 @@
     "jsonwebtoken": "^9.0.2",
     "js-cookie": "^3.0.5",
     "crypto-js": "^4.2.0",
-    "validator": "^13.11.0"
+    "validator": "^13.11.0",
+    "buffer": "^6.0.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
