@@ -71,10 +71,10 @@ export function LandingPage() {
   ];
 
   const stats = [
-    { number: '500+', label: 'Salones Confiando', icon: Users },
-    { number: '99.9%', label: 'Tiempo Activo', icon: Clock },
-    { number: '24/7', label: 'Soporte', icon: Shield },
-    { number: '15%', label: 'Ahorro Promedio', icon: TrendingUp }
+    { number: '3 min', label: 'Setup Inicial', icon: Clock },
+    { number: '0€', label: 'Costo de Prueba', icon: TrendingUp },
+    { number: 'Multi', label: 'Salones', icon: Users },
+    { number: 'Cloud', label: 'Acceso Seguro', icon: Shield }
   ];
 
   return (
