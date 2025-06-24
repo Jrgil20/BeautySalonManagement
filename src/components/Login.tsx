@@ -86,7 +86,7 @@ export function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 flex items-center justify-center p-4">
-      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className={`w-full gap-8 ${showAccounts ? 'max-w-6xl grid grid-cols-1 lg:grid-cols-2' : 'max-w-md'}`}>
         {/* Login Form */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
           <div className="text-center mb-8">
