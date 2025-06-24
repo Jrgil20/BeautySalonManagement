@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { Product } from '../types';
+import { Product, Supplier } from '../types';
 import { 
   Plus, 
   Search, 
@@ -12,7 +12,6 @@ import {
   Package
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 export function Inventory() {
   const { state, dispatch } = useApp();
@@ -55,7 +54,11 @@ export function Inventory() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este producto?')) {
+    const product = salonProducts.find(p => p.id === id);
+    if (!product) return;
+    
+    const confirmMessage = `¿Estás seguro de que quieres eliminar "${product.name}"?\n\nEsta acción no se puede deshacer.`;
+    if (window.confirm(confirmMessage)) {
       dispatch({ type: 'DELETE_PRODUCT', payload: id });
     }
   };
@@ -125,10 +128,10 @@ export function Inventory() {
             </span>
             <div className="flex items-center space-x-2">
               {stockStatus === 'low' && (
-                <AlertTriangle className="w-4 h-4 text-red-500" title="Stock bajo" />
+                <AlertTriangle className="w-4 h-4 text-red-500" />
               )}
               {(expirationStatus === 'expired' || expirationStatus === 'critical' || expirationStatus === 'warning') && (
-                <Calendar className="w-4 h-4 text-orange-500" title="Próximo a vencer" />
+                <Calendar className="w-4 h-4 text-orange-500" />
               )}
             </div>
           </div>
@@ -227,7 +230,7 @@ export function Inventory() {
   );
 }
 
-function ProductForm({ product, onClose, salonSuppliers }: { product: Product | null; onClose: () => void; salonSuppliers: any[] }) {
+function ProductForm({ product, onClose, salonSuppliers }: { product: Product | null; onClose: () => void; salonSuppliers: Supplier[] }) {
   const { state, dispatch } = useApp();
   const [formData, setFormData] = useState({
     name: product?.name || '',
@@ -241,18 +244,163 @@ function ProductForm({ product, onClose, salonSuppliers }: { product: Product | 
     supplierId: product?.supplierId || '',
   });
 
+  // Estado para errores de validación
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  // Función de validación
+  const validateField = (name: string, value: unknown) => {
+    const newErrors = { ...errors };
+    
+    switch (name) {
+      case 'name':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.name = 'El nombre del producto es obligatorio';
+        } else if (value.trim().length < 2) {
+          newErrors.name = 'El nombre debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 100) {
+          newErrors.name = 'El nombre no puede exceder 100 caracteres';
+        } else {
+          delete newErrors.name;
+        }
+        break;
+
+      case 'brand':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.brand = 'La marca es obligatoria';
+        } else if (value.trim().length < 2) {
+          newErrors.brand = 'La marca debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 50) {
+          newErrors.brand = 'La marca no puede exceder 50 caracteres';
+        } else {
+          delete newErrors.brand;
+        }
+        break;
+
+      case 'category':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.category = 'La categoría es obligatoria';
+        } else if (value.trim().length < 2) {
+          newErrors.category = 'La categoría debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 50) {
+          newErrors.category = 'La categoría no puede exceder 50 caracteres';
+        } else {
+          delete newErrors.category;
+        }
+        break;
+
+      case 'stock':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.stock = 'El stock no puede ser negativo';
+        } else if (!Number.isInteger(value)) {
+          newErrors.stock = 'El stock debe ser un número entero';
+        } else {
+          delete newErrors.stock;
+        }
+        break;
+
+      case 'minStock':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.minStock = 'El stock mínimo no puede ser negativo';
+        } else if (!Number.isInteger(value)) {
+          newErrors.minStock = 'El stock mínimo debe ser un número entero';
+        } else if (value > formData.stock) {
+          newErrors.minStock = 'El stock mínimo no puede ser mayor al stock actual';
+        } else {
+          delete newErrors.minStock;
+        }
+        break;
+
+      case 'unit':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.unit = 'La unidad es obligatoria';
+        } else if (value.trim().length < 1) {
+          newErrors.unit = 'La unidad debe tener al menos 1 carácter';
+        } else if (value.trim().length > 20) {
+          newErrors.unit = 'La unidad no puede exceder 20 caracteres';
+        } else {
+          delete newErrors.unit;
+        }
+        break;
+
+      case 'unitPrice':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.unitPrice = 'El precio no puede ser negativo';
+        } else if (value === 0) {
+          newErrors.unitPrice = 'El precio debe ser mayor a 0';
+        } else if (value > 999999.99) {
+          newErrors.unitPrice = 'El precio no puede exceder $999,999.99';
+        } else {
+          delete newErrors.unitPrice;
+        }
+        break;
+
+      case 'expirationDate':
+        if (typeof value !== 'string' || !value) {
+          newErrors.expirationDate = 'La fecha de vencimiento es obligatoria';
+        } else {
+          const selectedDate = new Date(value);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          if (selectedDate < today) {
+            newErrors.expirationDate = 'La fecha de vencimiento no puede ser anterior a hoy';
+          } else if (selectedDate > new Date('2100-12-31')) {
+            newErrors.expirationDate = 'La fecha de vencimiento no puede ser posterior al año 2100';
+          } else {
+            delete newErrors.expirationDate;
+          }
+        }
+        break;
+
+      case 'supplierId':
+        if (typeof value !== 'string' || !value) {
+          newErrors.supplierId = 'Debe seleccionar un proveedor';
+        } else {
+          delete newErrors.supplierId;
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Validar todos los campos
+  const validateAllFields = () => {
+    const fields = ['name', 'brand', 'category', 'stock', 'minStock', 'unit', 'unitPrice', 'expirationDate', 'supplierId'];
+    let isValid = true;
+    
+    fields.forEach(field => {
+      if (!validateField(field, formData[field as keyof typeof formData])) {
+        isValid = false;
+      }
+    });
+    
+    return isValid;
+  };
+
+  // Manejar cambios en los campos
+  const handleFieldChange = (name: string, value: unknown) => {
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateAllFields()) {
+      return;
+    }
     
     const productData: Product = {
       id: product?.id || Date.now().toString(),
       salonId: state.currentUser?.salonId || '',
-      name: formData.name,
-      brand: formData.brand,
-      category: formData.category,
+      name: formData.name.trim(),
+      brand: formData.brand.trim(),
+      category: formData.category.trim(),
       stock: formData.stock,
       minStock: formData.minStock,
-      unit: formData.unit,
+      unit: formData.unit.trim(),
       unitPrice: formData.unitPrice,
       expirationDate: new Date(formData.expirationDate),
       supplierId: formData.supplierId,
@@ -279,118 +427,168 @@ function ProductForm({ product, onClose, salonSuppliers }: { product: Product | 
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
               <input
                 type="text"
                 required
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onChange={(e) => handleFieldChange('name', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  errors.name ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Ej: Shampoo Hidratante"
               />
+              {errors.name && (
+                <p className="text-red-600 text-xs mt-1">{errors.name}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Marca</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Marca *</label>
               <input
                 type="text"
                 required
                 value={formData.brand}
-                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onChange={(e) => handleFieldChange('brand', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  errors.brand ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Ej: L'Oréal"
               />
+              {errors.brand && (
+                <p className="text-red-600 text-xs mt-1">{errors.brand}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
               <input
                 type="text"
                 required
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onChange={(e) => handleFieldChange('category', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  errors.category ? 'border-red-300' : 'border-gray-300'
+                }`}
+                placeholder="Ej: Cuidado Capilar"
               />
+              {errors.category && (
+                <p className="text-red-600 text-xs mt-1">{errors.category}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
                 <input
                   type="number"
                   required
                   min="0"
                   value={formData.stock}
-                  onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  onChange={(e) => handleFieldChange('stock', Number(e.target.value))}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.stock ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {errors.stock && (
+                  <p className="text-red-600 text-xs mt-1">{errors.stock}</p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stock Mínimo</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Stock Mínimo *</label>
                 <input
                   type="number"
                   required
                   min="0"
                   value={formData.minStock}
-                  onChange={(e) => setFormData({ ...formData, minStock: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  onChange={(e) => handleFieldChange('minStock', Number(e.target.value))}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.minStock ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {errors.minStock && (
+                  <p className="text-red-600 text-xs mt-1">{errors.minStock}</p>
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unidad</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Unidad *</label>
                 <input
                   type="text"
                   required
                   value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  onChange={(e) => handleFieldChange('unit', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.unit ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Ej: ml, tubo, pza"
                 />
+                {errors.unit && (
+                  <p className="text-red-600 text-xs mt-1">{errors.unit}</p>
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Precio Unitario</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Precio Unitario *</label>
                 <input
                   type="number"
                   required
                   min="0"
                   step="0.01"
                   value={formData.unitPrice}
-                  onChange={(e) => setFormData({ ...formData, unitPrice: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  onChange={(e) => handleFieldChange('unitPrice', Number(e.target.value))}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.unitPrice ? 'border-red-300' : 'border-gray-300'
+                  }`}
                 />
+                {errors.unitPrice && (
+                  <p className="text-red-600 text-xs mt-1">{errors.unitPrice}</p>
+                )}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento *</label>
               <input
                 type="date"
                 required
                 value={formData.expirationDate}
-                onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onChange={(e) => handleFieldChange('expirationDate', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  errors.expirationDate ? 'border-red-300' : 'border-gray-300'
+                }`}
               />
+              {errors.expirationDate && (
+                <p className="text-red-600 text-xs mt-1">{errors.expirationDate}</p>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor *</label>
               <select
                 required
                 value={formData.supplierId}
-                onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onChange={(e) => handleFieldChange('supplierId', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                  errors.supplierId ? 'border-red-300' : 'border-gray-300'
+                }`}
               >
                 <option value="">Seleccionar proveedor</option>
                 {salonSuppliers.map(supplier => (
                   <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                 ))}
               </select>
+              {errors.supplierId && (
+                <p className="text-red-600 text-xs mt-1">{errors.supplierId}</p>
+              )}
             </div>
 
             <div className="flex space-x-4 pt-4">
               <button
                 type="submit"
-                className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200"
+                disabled={Object.keys(errors).length > 0}
+                className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {product ? 'Actualizar' : 'Crear'}
               </button>

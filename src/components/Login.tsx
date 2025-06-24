@@ -26,6 +26,19 @@ export function Login() {
     e.preventDefault();
     setError('');
 
+    // Validación básica
+    if (!email.trim() || !password.trim()) {
+      setError('Por favor completa todos los campos');
+      return;
+    }
+
+    // Validación de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Por favor ingresa un email válido');
+      return;
+    }
+
     const user = state.users.find(u => u.email === email && u.password === password);
     
     if (user) {
@@ -214,7 +227,7 @@ export function Login() {
                     <div>
                       <span className="font-medium">Contraseña:</span>
                       <p className="font-mono bg-gray-100 px-2 py-1 rounded mt-1">
-                        {showAccounts ? user.password : '••••••••'}
+                        ••••••••
                       </p>
                     </div>
                     <div>

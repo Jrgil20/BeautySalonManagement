@@ -5,7 +5,6 @@ import {
   AlertTriangle, 
   Calendar, 
   Scissors,
-  Users,
   TrendingUp,
   TrendingDown,
   DollarSign
@@ -20,7 +19,6 @@ export function Dashboard() {
   // Filter data by current user's salon
   const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
   const salonServices = state.services.filter(s => s.salonId === state.currentUser?.salonId);
-  const salonSuppliers = state.suppliers.filter(s => s.salonId === state.currentUser?.salonId);
 
   // Calculate KPIs
   const totalProducts = salonProducts.length;
@@ -29,7 +27,6 @@ export function Dashboard() {
     differenceInDays(p.expirationDate, new Date()) <= 30
   ).length;
   const totalServices = salonServices.length;
-  const totalSuppliers = salonSuppliers.length;
 
   // Mock financial data
   const monthlyRevenue = 15000;

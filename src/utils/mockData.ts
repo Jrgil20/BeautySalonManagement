@@ -1,3 +1,11 @@
+// ⚠️ AVISO IMPORTANTE:
+// Las cuentas y contraseñas aquí definidas son SOLO para DEMOSTRACIÓN y pruebas locales.
+// No existe persistencia ni seguridad real. No usar en producción.
+// ---
+// IMPORTANT NOTICE:
+// The accounts and passwords defined here are for DEMO and local testing ONLY.
+// There is no real persistence or security. Do NOT use in production.
+
 import { Product, Service, Supplier, User } from '../types';
 import { addDays, subDays } from 'date-fns';
 

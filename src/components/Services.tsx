@@ -19,7 +19,6 @@ export function Services() {
   
   // Filter data by current user's salon
   const salonServices = state.services.filter(s => s.salonId === state.currentUser?.salonId);
-  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -42,7 +41,11 @@ export function Services() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('¿Estás seguro de que quieres eliminar este servicio?')) {
+    const service = salonServices.find(s => s.id === id);
+    if (!service) return;
+    
+    const confirmMessage = `¿Estás seguro de que quieres eliminar "${service.name}"?\n\nEsta acción no se puede deshacer.`;
+    if (window.confirm(confirmMessage)) {
       dispatch({ type: 'DELETE_SERVICE', payload: id });
     }
   };
@@ -233,14 +236,115 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
   const [selectedProductId, setSelectedProductId] = useState('');
   const [productQuantity, setProductQuantity] = useState(0);
 
+  // Estado para errores de validación
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
   const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
   const availableProducts = salonProducts.filter(product => product.stock > 0);
+
+  // Función de validación
+  const validateField = (name: string, value: unknown) => {
+    const newErrors = { ...errors };
+    
+    switch (name) {
+      case 'name':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.name = 'El nombre del servicio es obligatorio';
+        } else if (value.trim().length < 2) {
+          newErrors.name = 'El nombre debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 100) {
+          newErrors.name = 'El nombre no puede exceder 100 caracteres';
+        } else {
+          delete newErrors.name;
+        }
+        break;
+
+      case 'description':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.description = 'La descripción es obligatoria';
+        } else if (value.trim().length < 10) {
+          newErrors.description = 'La descripción debe tener al menos 10 caracteres';
+        } else if (value.trim().length > 500) {
+          newErrors.description = 'La descripción no puede exceder 500 caracteres';
+        } else {
+          delete newErrors.description;
+        }
+        break;
+
+      case 'price':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.price = 'El precio no puede ser negativo';
+        } else if (value === 0) {
+          newErrors.price = 'El precio debe ser mayor a 0';
+        } else if (value > 999999.99) {
+          newErrors.price = 'El precio no puede exceder $999,999.99';
+        } else {
+          delete newErrors.price;
+        }
+        break;
+
+      case 'duration':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.duration = 'La duración no puede ser negativa';
+        } else if (value === 0) {
+          newErrors.duration = 'La duración debe ser mayor a 0';
+        } else if (!Number.isInteger(value)) {
+          newErrors.duration = 'La duración debe ser un número entero';
+        } else if (value > 480) {
+          newErrors.duration = 'La duración no puede exceder 480 minutos (8 horas)';
+        } else {
+          delete newErrors.duration;
+        }
+        break;
+
+      case 'category':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.category = 'La categoría es obligatoria';
+        } else if (value.trim().length < 2) {
+          newErrors.category = 'La categoría debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 50) {
+          newErrors.category = 'La categoría no puede exceder 50 caracteres';
+        } else {
+          delete newErrors.category;
+        }
+        break;
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Validar todos los campos
+  const validateAllFields = () => {
+    const fields = ['name', 'description', 'price', 'duration', 'category'];
+    let isValid = true;
+    
+    fields.forEach(field => {
+      if (!validateField(field, formData[field as keyof typeof formData])) {
+        isValid = false;
+      }
+    });
+    
+    return isValid;
+  };
+
+  // Manejar cambios en los campos
+  const handleFieldChange = (name: string, value: unknown) => {
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
+  };
 
   const addProductToService = () => {
     if (!selectedProductId || productQuantity <= 0) return;
 
     const selectedProduct = salonProducts.find(p => p.id === selectedProductId);
     if (!selectedProduct) return;
+
+    // Validar que la cantidad no exceda el stock disponible
+    if (productQuantity > selectedProduct.stock) {
+      alert(`No hay suficiente stock. Disponible: ${selectedProduct.stock} ${selectedProduct.unit}`);
+      return;
+    }
 
     // Check if product is already added
     const existingProductIndex = serviceProducts.findIndex(sp => sp.productId === selectedProductId);
@@ -285,14 +389,18 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!validateAllFields()) {
+      return;
+    }
+    
     const serviceData: Service = {
       id: service?.id || Date.now().toString(),
       salonId: state.currentUser?.salonId || '',
-      name: formData.name,
-      description: formData.description,
+      name: formData.name.trim(),
+      description: formData.description.trim(),
       price: formData.price,
       duration: formData.duration,
-      category: formData.category,
+      category: formData.category.trim(),
       products: serviceProducts,
       isActive: true,
       createdAt: service?.createdAt || new Date(),
@@ -321,60 +429,88 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                   <input
                     type="text"
                     required
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    onChange={(e) => handleFieldChange('name', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.name ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Ej: Corte y Peinado"
                   />
+                  {errors.name && (
+                    <p className="text-red-600 text-xs mt-1">{errors.name}</p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
                   <textarea
                     required
                     rows={3}
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    onChange={(e) => handleFieldChange('description', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.description ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Ej: Corte personalizado con peinado profesional"
                   />
+                  {errors.description && (
+                    <p className="text-red-600 text-xs mt-1">{errors.description}</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio ($)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio ($) *</label>
                     <input
                       type="number"
                       required
                       min="0"
                       step="0.01"
                       value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      onChange={(e) => handleFieldChange('price', Number(e.target.value))}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                        errors.price ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     />
+                    {errors.price && (
+                      <p className="text-red-600 text-xs mt-1">{errors.price}</p>
+                    )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Duración (min)</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duración (min) *</label>
                     <input
                       type="number"
                       required
                       min="0"
                       value={formData.duration}
-                      onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      onChange={(e) => handleFieldChange('duration', Number(e.target.value))}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                        errors.duration ? 'border-red-300' : 'border-gray-300'
+                      }`}
                     />
+                    {errors.duration && (
+                      <p className="text-red-600 text-xs mt-1">{errors.duration}</p>
+                    )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
                     <input
                       type="text"
                       required
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      onChange={(e) => handleFieldChange('category', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                        errors.category ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                      placeholder="Ej: Cabello"
                     />
+                    {errors.category && (
+                      <p className="text-red-600 text-xs mt-1">{errors.category}</p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -483,7 +619,8 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
             <div className="flex space-x-4 pt-4 border-t border-gray-200">
               <button
                 type="submit"
-                className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200"
+                disabled={Object.keys(errors).length > 0}
+                className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
                 {service ? 'Actualizar' : 'Crear'}
               </button>
