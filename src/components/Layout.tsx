@@ -85,7 +85,7 @@ export function Layout({ children }: LayoutProps) {
       <div className="lg:pl-64 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-6 relative z-40 -mb-2">
+          <div className="flex items-center justify-between h-16 px-6">
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
