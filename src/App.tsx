@@ -6,6 +6,7 @@ import { Inventory } from './components/Inventory';
 import { Services } from './components/Services';
 import { Suppliers } from './components/Suppliers';
 import { Login } from './components/Login';
+import { LandingPage } from './components/LandingPage';
 import { mockProducts, mockServices, mockSuppliers, mockUsers } from './utils/mockData';
 
 function AppContent() {
@@ -19,9 +20,12 @@ function AppContent() {
     dispatch({ type: 'SET_USERS', payload: mockUsers });
   }, [dispatch]);
 
-  // If no user is logged in, show login
+  // If no user is logged in, show landing page or login based on current view
   if (!state.currentUser) {
-    return <Login />;
+    if (state.currentView === 'login') {
+      return <Login />;
+    }
+    return <LandingPage />;
   }
 
   const renderCurrentView = () => {

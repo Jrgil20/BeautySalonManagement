@@ -53,7 +53,7 @@ const initialState: AppState = {
     monthlyRevenue: 0,
     profitMargin: 0,
   },
-  currentView: 'dashboard',
+  currentView: 'landing',
   currentUser: null,
 };
 
@@ -106,7 +106,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'LOGIN_USER':
       return { ...state, currentUser: action.payload, currentView: 'dashboard' };
     case 'LOGOUT_USER':
-      return { ...state, currentUser: null, currentView: 'login' };
+      return { ...state, currentUser: null, currentView: 'landing' };
     case 'ADD_MOVEMENT':
       return { ...state, movements: [...state.movements, action.payload] };
     case 'SET_NOTIFICATIONS':
