@@ -101,16 +101,16 @@ export function Login() {
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 flex items-center justify-center p-4">
       <div className={`w-full gap-8 ${showAccounts ? 'max-w-6xl grid grid-cols-1 lg:grid-cols-2' : 'max-w-md'}`}>
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
-          <div className="text-center mb-8">
+        <section className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
+          <header className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full mb-4">
-              <LogIn className="w-8 h-8 text-white" />
+              <LogIn className="w-8 h-8 text-white" aria-hidden="true" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
               Glam Stock
             </h1>
             <p className="text-gray-600 mt-2">Sistema de Gestión Integral</p>
-          </div>
+          </header>
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div>
@@ -118,7 +118,7 @@ export function Login() {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
                 <input
                   type="email"
                   required
@@ -135,7 +135,7 @@ export function Login() {
                 Contraseña
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
                 <input
                   type={showPassword ? 'text' : 'password'}
                   required
@@ -148,6 +148,7 @@ export function Login() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -155,7 +156,7 @@ export function Login() {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3" role="alert">
                 <p className="text-red-700 text-sm">{error}</p>
               </div>
             )}
@@ -168,33 +169,33 @@ export function Login() {
             </button>
           </form>
 
-          <div className="mt-8 text-center">
+          <footer className="mt-8 text-center">
             <button
               onClick={() => setShowAccounts(!showAccounts)}
               className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors"
             >
               {showAccounts ? 'Ocultar' : 'Ver'} cuentas de demostración
             </button>
-          </div>
-        </div>
+          </footer>
+        </section>
 
         {/* Registered Accounts Panel */}
         {showAccounts && (
-          <div className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
-          <div className="flex items-center justify-between mb-6">
+          <section className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
+          <header className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold text-gray-900">Cuentas Registradas</h2>
             <div className="flex items-center text-sm text-gray-600">
-              <Users className="w-4 h-4 mr-1" />
+              <Users className="w-4 h-4 mr-1" aria-hidden="true" />
               {state.users.length} usuarios
             </div>
-          </div>
+          </header>
 
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {state.users.map((user) => {
               const RoleIcon = getRoleIcon(user.role);
               
               return (
-                <div
+                <article
                   key={user.id}
                   className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
                     user.isActive 
@@ -203,10 +204,10 @@ export function Login() {
                   }`}
                   onClick={() => user.isActive && handleQuickLogin(user.email, user.password)}
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <header className="flex items-start justify-between mb-3">
                     <div className="flex items-center">
                       <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center mr-3">
-                        <RoleIcon className="w-5 h-5 text-white" />
+                        <RoleIcon className="w-5 h-5 text-white" aria-hidden="true" />
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900">{user.name}</h3>
@@ -221,7 +222,7 @@ export function Login() {
                         <span className="text-xs text-red-500 mt-1">Inactivo</span>
                       )}
                     </div>
-                  </div>
+                  </header>
 
                   <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
                     <div>
@@ -233,38 +234,38 @@ export function Login() {
                     <div>
                       <span className="font-medium">Último acceso:</span>
                       <div className="flex items-center mt-1">
-                        <Clock className="w-3 h-3 mr-1" />
-                        <span>
+                        <Clock className="w-3 h-3 mr-1" aria-hidden="true" />
+                        <time>
                           {user.lastLogin 
                             ? format(user.lastLogin, 'dd/MM/yyyy', { locale: es })
                             : 'Nunca'
                           }
-                        </span>
+                        </time>
                       </div>
                     </div>
                   </div>
 
                   {user.isActive && (
-                    <div className="mt-3 pt-3 border-t border-gray-100">
+                    <footer className="mt-3 pt-3 border-t border-gray-100">
                       <p className="text-xs text-purple-600 font-medium">
                         Haz clic para usar estas credenciales
                       </p>
-                    </div>
+                    </footer>
                   )}
-                </div>
+                </article>
               );
             })}
           </div>
 
-          <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+          <aside className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
             <h3 className="font-semibold text-purple-800 mb-2">Información de Demostración</h3>
             <ul className="text-sm text-purple-700 space-y-1">
               <li>• Haz clic en cualquier cuenta activa para usar sus credenciales</li>
               <li>• Las contraseñas se muestran solo para propósitos de demostración</li>
               <li>• Cada rol tiene diferentes permisos en el sistema</li>
             </ul>
-          </div>
-        </div>
+          </aside>
+        </section>
         )}
       </div>
     </div>

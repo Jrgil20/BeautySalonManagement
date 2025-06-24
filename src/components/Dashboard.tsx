@@ -68,43 +68,44 @@ export function Dashboard() {
     trend?: 'up' | 'down';
     color: string;
   }) => (
-    <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
-      <div className="flex items-center justify-between">
+    <article className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+      <header className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
           <p className="text-2xl font-bold text-gray-900 mt-2">{value}</p>
         </div>
         <div className={`p-3 rounded-lg ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
+          <Icon className="w-6 h-6 text-white" aria-hidden="true" />
         </div>
-      </div>
+      </header>
       {trend && (
-        <div className="flex items-center mt-4">
+        <footer className="flex items-center mt-4">
           {trend === 'up' ? (
-            <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+            <TrendingUp className="w-4 h-4 text-green-500 mr-1" aria-hidden="true" />
           ) : (
-            <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+            <TrendingDown className="w-4 h-4 text-red-500 mr-1" aria-hidden="true" />
           )}
           <span className={`text-sm font-medium ${trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
             {trend === 'up' ? '+12%' : '-5%'} vs mes anterior
           </span>
-        </div>
+        </footer>
       )}
-    </div>
+    </article>
   );
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">
+        <time className="text-gray-600" dateTime={new Date().toISOString()}>
           {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}
-        </p>
-      </div>
+        </time>
+      </header>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" aria-labelledby="stats-heading">
+        <h2 id="stats-heading" className="sr-only">Estadísticas principales</h2>
         <StatCard
           title="Total Productos"
           value={totalProducts}
@@ -131,10 +132,11 @@ export function Dashboard() {
           trend="up"
           color="bg-gradient-to-r from-green-500 to-green-600"
         />
-      </div>
+      </section>
 
       {/* Financial KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-6" aria-labelledby="financial-heading">
+        <h2 id="financial-heading" className="sr-only">Indicadores financieros</h2>
         <StatCard
           title="Ingresos Mensuales"
           value={`$${monthlyRevenue.toLocaleString()}`}
@@ -155,12 +157,13 @@ export function Dashboard() {
           trend="up"
           color="bg-gradient-to-r from-purple-500 to-indigo-600"
         />
-      </div>
+      </section>
 
       {/* Charts Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section className="grid grid-cols-1 lg:grid-cols-2 gap-6" aria-labelledby="charts-heading">
+        <h2 id="charts-heading" className="sr-only">Gráficos de análisis</h2>
         {/* Stock Chart */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <article className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Niveles de Stock</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -174,10 +177,10 @@ export function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </article>
 
         {/* Category Distribution */}
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <article className="bg-white rounded-xl shadow-lg p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribución por Categoría</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -200,12 +203,12 @@ export function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
       {/* Revenue Chart */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Ingresos vs Gastos</h3>
+      <section className="bg-white rounded-xl shadow-lg p-6" aria-labelledby="revenue-heading">
+        <h2 id="revenue-heading" className="text-lg font-semibold text-gray-900 mb-4">Ingresos vs Gastos</h2>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={revenueData}>
@@ -230,28 +233,28 @@ export function Dashboard() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </section>
 
       {/* Alerts Section */}
       {(lowStockItems > 0 || expiringItems > 0) && (
-        <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 border-l-4 border-orange-500">
-          <h3 className="text-lg font-semibold text-orange-800 mb-4 flex items-center">
-            <AlertTriangle className="w-5 h-5 mr-2" />
+        <section className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 border-l-4 border-orange-500" role="alert" aria-labelledby="alerts-heading">
+          <h3 id="alerts-heading" className="text-lg font-semibold text-orange-800 mb-4 flex items-center">
+            <AlertTriangle className="w-5 h-5 mr-2" aria-hidden="true" />
             Alertas Importantes
           </h3>
-          <div className="space-y-2">
+          <ul className="space-y-2">
             {lowStockItems > 0 && (
-              <p className="text-orange-700">
+              <li className="text-orange-700">
                 • {lowStockItems} producto{lowStockItems > 1 ? 's' : ''} con stock bajo
-              </p>
+              </li>
             )}
             {expiringItems > 0 && (
-              <p className="text-red-700">
+              <li className="text-red-700">
                 • {expiringItems} producto{expiringItems > 1 ? 's' : ''} próximo{expiringItems > 1 ? 's' : ''} a vencer
-              </p>
+              </li>
             )}
-          </div>
-        </div>
+          </ul>
+        </section>
       )}
     </div>
   );

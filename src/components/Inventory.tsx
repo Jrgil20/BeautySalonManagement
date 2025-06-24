@@ -68,9 +68,9 @@ export function Inventory() {
     const expirationStatus = getExpirationStatus(product.expirationDate);
     
     return (
-      <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+      <article className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
         <div className="p-6">
-          <div className="flex items-start justify-between mb-4">
+          <header className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-gray-900">{product.name}</h3>
               <p className="text-sm text-gray-600">{product.brand}</p>
@@ -78,25 +78,27 @@ export function Inventory() {
                 {product.category}
               </span>
             </div>
-            <div className="flex space-x-2">
+            <nav className="flex space-x-2">
               <button
                 onClick={() => handleEdit(product)}
                 className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                aria-label={`Editar ${product.name}`}
               >
-                <Edit className="w-4 h-4" />
+                <Edit className="w-4 h-4" aria-hidden="true" />
               </button>
               <button
                 onClick={() => handleDelete(product.id)}
                 className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                aria-label={`Eliminar ${product.name}`}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" aria-hidden="true" />
               </button>
-            </div>
-          </div>
+            </nav>
+          </header>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <section className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center">
-              <Package className="w-4 h-4 text-gray-400 mr-2" />
+              <Package className="w-4 h-4 text-gray-400 mr-2" aria-hidden="true" />
               <div>
                 <p className="text-xs text-gray-500">Stock</p>
                 <p className={`font-semibold ${
@@ -108,51 +110,51 @@ export function Inventory() {
               </div>
             </div>
             <div className="flex items-center">
-              <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+              <Calendar className="w-4 h-4 text-gray-400 mr-2" aria-hidden="true" />
               <div>
                 <p className="text-xs text-gray-500">Vencimiento</p>
-                <p className={`text-sm font-medium ${
+                <time className={`text-sm font-medium ${
                   expirationStatus === 'expired' ? 'text-red-600' : 
                   expirationStatus === 'critical' ? 'text-red-500' :
                   expirationStatus === 'warning' ? 'text-orange-500' : 'text-gray-600'
-                }`}>
+                }`} dateTime={product.expirationDate.toISOString()}>
                   {format(product.expirationDate, 'dd/MM/yyyy')}
-                </p>
+                </time>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+          <footer className="flex items-center justify-between pt-4 border-t border-gray-100">
             <span className="text-lg font-bold text-gray-900">
               ${product.unitPrice.toFixed(2)}
             </span>
             <div className="flex items-center space-x-2">
               {stockStatus === 'low' && (
-                <AlertTriangle className="w-4 h-4 text-red-500" />
+                <AlertTriangle className="w-4 h-4 text-red-500" aria-hidden="true" />
               )}
               {(expirationStatus === 'expired' || expirationStatus === 'critical' || expirationStatus === 'warning') && (
-                <Calendar className="w-4 h-4 text-orange-500" />
+                <Calendar className="w-4 h-4 text-orange-500" aria-hidden="true" />
               )}
             </div>
-          </div>
+          </footer>
         </div>
 
         {stockStatus === 'low' && (
-          <div className="px-6 py-3 bg-red-50 border-t border-red-100">
+          <aside className="px-6 py-3 bg-red-50 border-t border-red-100" role="alert">
             <p className="text-sm text-red-700 flex items-center">
-              <AlertTriangle className="w-4 h-4 mr-2" />
+              <AlertTriangle className="w-4 h-4 mr-2" aria-hidden="true" />
               Stock bajo (mínimo: {product.minStock} {product.unit})
             </p>
-          </div>
+          </aside>
         )}
-      </div>
+      </article>
     );
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Inventario</h1>
         <button
           onClick={() => {
@@ -161,16 +163,17 @@ export function Inventory() {
           }}
           className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
-          <Plus className="w-5 h-5 mr-2" />
+          <Plus className="w-5 h-5 mr-2" aria-hidden="true" />
           Agregar Producto
         </button>
-      </div>
+      </header>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <section className="bg-white rounded-lg shadow-md p-6" aria-labelledby="filters-heading">
+        <h2 id="filters-heading" className="sr-only">Filtros de búsqueda</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
             <input
               type="text"
               placeholder="Buscar productos..."
@@ -181,7 +184,7 @@ export function Inventory() {
           </div>
           
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -198,21 +201,22 @@ export function Inventory() {
             {filteredProducts.length} de {salonProducts.length} productos
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-labelledby="products-heading">
+        <h2 id="products-heading" className="sr-only">Lista de productos</h2>
         {filteredProducts.map(product => (
           <ProductCard key={product.id} product={product} />
         ))}
-      </div>
+      </section>
 
       {filteredProducts.length === 0 && (
-        <div className="text-center py-12">
-          <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron productos</h3>
+        <section className="text-center py-12" aria-labelledby="empty-state-heading">
+          <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" aria-hidden="true" />
+          <h3 id="empty-state-heading" className="text-lg font-medium text-gray-900 mb-2">No se encontraron productos</h3>
           <p className="text-gray-600">Intenta ajustar los filtros o agregar nuevos productos.</p>
-        </div>
+        </section>
       )}
 
       {/* Product Form Modal */}
@@ -418,173 +422,177 @@ function ProductForm({ product, onClose, salonSuppliers }: { product: Product | 
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="form-title">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">
+        <header className="p-6">
+          <h2 id="form-title" className="text-xl font-bold mb-4">
             {product ? 'Editar Producto' : 'Nuevo Producto'}
           </h2>
           
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => handleFieldChange('name', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.name ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Ej: Shampoo Hidratante"
-              />
-              {errors.name && (
-                <p className="text-red-600 text-xs mt-1">{errors.name}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Marca *</label>
-              <input
-                type="text"
-                required
-                value={formData.brand}
-                onChange={(e) => handleFieldChange('brand', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.brand ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Ej: L'Oréal"
-              />
-              {errors.brand && (
-                <p className="text-red-600 text-xs mt-1">{errors.brand}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
-              <input
-                type="text"
-                required
-                value={formData.category}
-                onChange={(e) => handleFieldChange('category', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.category ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="Ej: Cuidado Capilar"
-              />
-              {errors.category && (
-                <p className="text-red-600 text-xs mt-1">{errors.category}</p>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <fieldset>
+              <legend className="sr-only">Información del producto</legend>
+              
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  value={formData.stock}
-                  onChange={(e) => handleFieldChange('stock', Number(e.target.value))}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    errors.stock ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
-                {errors.stock && (
-                  <p className="text-red-600 text-xs mt-1">{errors.stock}</p>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Stock Mínimo *</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  value={formData.minStock}
-                  onChange={(e) => handleFieldChange('minStock', Number(e.target.value))}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    errors.minStock ? 'border-red-300' : 'border-gray-300'
-                  }`}
-                />
-                {errors.minStock && (
-                  <p className="text-red-600 text-xs mt-1">{errors.minStock}</p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Unidad *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                 <input
                   type="text"
                   required
-                  value={formData.unit}
-                  onChange={(e) => handleFieldChange('unit', e.target.value)}
+                  value={formData.name}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    errors.unit ? 'border-red-300' : 'border-gray-300'
+                    errors.name ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="Ej: ml, tubo, pza"
+                  placeholder="Ej: Shampoo Hidratante"
                 />
-                {errors.unit && (
-                  <p className="text-red-600 text-xs mt-1">{errors.unit}</p>
+                {errors.name && (
+                  <p className="text-red-600 text-xs mt-1" role="alert">{errors.name}</p>
                 )}
               </div>
+
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Precio Unitario *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Marca *</label>
                 <input
-                  type="number"
+                  type="text"
                   required
-                  min="0"
-                  step="0.01"
-                  value={formData.unitPrice}
-                  onChange={(e) => handleFieldChange('unitPrice', Number(e.target.value))}
+                  value={formData.brand}
+                  onChange={(e) => handleFieldChange('brand', e.target.value)}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                    errors.unitPrice ? 'border-red-300' : 'border-gray-300'
+                    errors.brand ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="Ej: L'Oréal"
                 />
-                {errors.unitPrice && (
-                  <p className="text-red-600 text-xs mt-1">{errors.unitPrice}</p>
+                {errors.brand && (
+                  <p className="text-red-600 text-xs mt-1" role="alert">{errors.brand}</p>
                 )}
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento *</label>
-              <input
-                type="date"
-                required
-                value={formData.expirationDate}
-                onChange={(e) => handleFieldChange('expirationDate', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.expirationDate ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.expirationDate && (
-                <p className="text-red-600 text-xs mt-1">{errors.expirationDate}</p>
-              )}
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.category}
+                  onChange={(e) => handleFieldChange('category', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.category ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Ej: Cuidado Capilar"
+                />
+                {errors.category && (
+                  <p className="text-red-600 text-xs mt-1" role="alert">{errors.category}</p>
+                )}
+              </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor *</label>
-              <select
-                required
-                value={formData.supplierId}
-                onChange={(e) => handleFieldChange('supplierId', e.target.value)}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                  errors.supplierId ? 'border-red-300' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Seleccionar proveedor</option>
-                {salonSuppliers.map(supplier => (
-                  <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
-                ))}
-              </select>
-              {errors.supplierId && (
-                <p className="text-red-600 text-xs mt-1">{errors.supplierId}</p>
-              )}
-            </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock *</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={formData.stock}
+                    onChange={(e) => handleFieldChange('stock', Number(e.target.value))}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.stock ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.stock && (
+                    <p className="text-red-600 text-xs mt-1" role="alert">{errors.stock}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock Mínimo *</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    value={formData.minStock}
+                    onChange={(e) => handleFieldChange('minStock', Number(e.target.value))}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.minStock ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.minStock && (
+                    <p className="text-red-600 text-xs mt-1" role="alert">{errors.minStock}</p>
+                  )}
+                </div>
+              </div>
 
-            <div className="flex space-x-4 pt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Unidad *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.unit}
+                    onChange={(e) => handleFieldChange('unit', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.unit ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Ej: ml, tubo, pza"
+                  />
+                  {errors.unit && (
+                    <p className="text-red-600 text-xs mt-1" role="alert">{errors.unit}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Precio Unitario *</label>
+                  <input
+                    type="number"
+                    required
+                    min="0"
+                    step="0.01"
+                    value={formData.unitPrice}
+                    onChange={(e) => handleFieldChange('unitPrice', Number(e.target.value))}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.unitPrice ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                  />
+                  {errors.unitPrice && (
+                    <p className="text-red-600 text-xs mt-1" role="alert">{errors.unitPrice}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de Vencimiento *</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.expirationDate}
+                  onChange={(e) => handleFieldChange('expirationDate', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.expirationDate ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                />
+                {errors.expirationDate && (
+                  <p className="text-red-600 text-xs mt-1" role="alert">{errors.expirationDate}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Proveedor *</label>
+                <select
+                  required
+                  value={formData.supplierId}
+                  onChange={(e) => handleFieldChange('supplierId', e.target.value)}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                    errors.supplierId ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                >
+                  <option value="">Seleccionar proveedor</option>
+                  {salonSuppliers.map(supplier => (
+                    <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
+                  ))}
+                </select>
+                {errors.supplierId && (
+                  <p className="text-red-600 text-xs mt-1" role="alert">{errors.supplierId}</p>
+                )}
+              </div>
+            </fieldset>
+
+            <footer className="flex space-x-4 pt-4">
               <button
                 type="submit"
                 disabled={Object.keys(errors).length > 0}
@@ -599,9 +607,9 @@ function ProductForm({ product, onClose, salonSuppliers }: { product: Product | 
               >
                 Cancelar
               </button>
-            </div>
+            </footer>
           </form>
-        </div>
+        </header>
       </div>
     </div>
   );

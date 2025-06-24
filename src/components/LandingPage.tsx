@@ -85,7 +85,7 @@ export function LandingPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg mr-3">
-                <Sparkles className="w-6 h-6 text-white" />
+                <Sparkles className="w-6 h-6 text-white" aria-hidden="true" />
               </div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
                 Glam Stock
@@ -96,7 +96,7 @@ export function LandingPage() {
               className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
               Iniciar Sesión
-              <ArrowRight className="w-4 h-4 ml-2" />
+              <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -107,15 +107,15 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-100 to-purple-100 rounded-full text-sm font-medium text-purple-800 mb-8">
-              <Star className="w-4 h-4 mr-2" />
+              <Star className="w-4 h-4 mr-2" aria-hidden="true" />
               Sistema de Gestión Integral para Salones de Belleza
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+            <h2 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               Transforma tu
               <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent"> Salón </span>
               con Tecnología
-            </h1>
+            </h2>
             
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Gestiona inventario, servicios, proveedores y finanzas de múltiples salones desde una sola plataforma. 
@@ -128,38 +128,39 @@ export function LandingPage() {
                 className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg font-semibold"
               >
                 Comenzar Ahora
-                <ArrowRight className="w-5 h-5 ml-2" />
+                <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </button>
               <button
                 onClick={handleGetStarted}
                 className="inline-flex items-center px-8 py-4 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-200 text-lg font-semibold"
               >
                 Ver Demo
-                <Sparkles className="w-5 h-5 ml-2" />
+                <Sparkles className="w-5 h-5 ml-2" aria-hidden="true" />
               </button>
             </div>
           </div>
         </div>
 
         {/* Floating Elements */}
-        <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full opacity-20 animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full opacity-20 animate-pulse delay-1000"></div>
+        <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full opacity-20 animate-pulse" aria-hidden="true"></div>
+        <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full opacity-20 animate-pulse delay-1000" aria-hidden="true"></div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white/50 backdrop-blur-sm">
+      <section className="py-16 bg-white/50 backdrop-blur-sm" aria-labelledby="stats-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 id="stats-heading" className="sr-only">Estadísticas del sistema</h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <div key={index} className="text-center">
+                <article key={index} className="text-center">
                   <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg mb-4">
-                    <Icon className="w-6 h-6 text-white" />
+                    <Icon className="w-6 h-6 text-white" aria-hidden="true" />
                   </div>
                   <div className="text-3xl font-bold text-gray-900 mb-2">{stat.number}</div>
                   <div className="text-gray-600">{stat.label}</div>
-                </div>
+                </article>
               );
             })}
           </div>
@@ -167,29 +168,29 @@ export function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section className="py-20">
+      <section className="py-20" aria-labelledby="features-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <header className="text-center mb-16">
+            <h2 id="features-heading" className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Todo lo que necesitas para
               <span className="bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent"> gestionar tu salón</span>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Herramientas profesionales diseñadas específicamente para la industria de la belleza
             </p>
-          </div>
+          </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div key={index} className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                <article key={index} className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
                   <div className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-r ${feature.color} rounded-lg mb-6`}>
-                    <Icon className="w-6 h-6 text-white" />
+                    <Icon className="w-6 h-6 text-white" aria-hidden="true" />
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-4">{feature.title}</h3>
                   <p className="text-gray-600">{feature.description}</p>
-                </div>
+                </article>
               );
             })}
           </div>
@@ -197,24 +198,24 @@ export function LandingPage() {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 bg-gradient-to-r from-pink-500 to-purple-500">
+      <section className="py-20 bg-gradient-to-r from-pink-500 to-purple-500" aria-labelledby="benefits-heading">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+              <h2 id="benefits-heading" className="text-3xl md:text-4xl font-bold text-white mb-6">
                 Beneficios que transformarán tu negocio
               </h2>
               <p className="text-pink-100 text-lg mb-8">
                 Únete a cientos de salones que ya optimizaron sus operaciones y aumentaron su rentabilidad.
               </p>
-              <div className="space-y-4">
+              <ul className="space-y-4">
                 {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center">
-                    <CheckCircle className="w-6 h-6 text-pink-200 mr-3 flex-shrink-0" />
+                  <li key={index} className="flex items-center">
+                    <CheckCircle className="w-6 h-6 text-pink-200 mr-3 flex-shrink-0" aria-hidden="true" />
                     <span className="text-white">{benefit}</span>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
             <div className="relative">
               <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20">
@@ -233,9 +234,9 @@ export function LandingPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white" aria-labelledby="cta-heading">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+          <h2 id="cta-heading" className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
             ¿Listo para revolucionar tu salón?
           </h2>
           <p className="text-xl text-gray-600 mb-8">
@@ -246,7 +247,7 @@ export function LandingPage() {
             className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-xl hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 text-lg font-semibold"
           >
             Comenzar Prueba Gratuita
-            <ArrowRight className="w-5 h-5 ml-2" />
+            <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
           </button>
         </div>
       </section>
@@ -257,7 +258,7 @@ export function LandingPage() {
           <div className="text-center">
             <div className="flex items-center justify-center mb-4">
               <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg mr-3">
-                <Sparkles className="w-6 h-6 text-white" />
+                <Sparkles className="w-6 h-6 text-white" aria-hidden="true" />
               </div>
               <h3 className="text-2xl font-bold bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
                 Glam Stock

@@ -44,56 +44,60 @@ export function Layout({ children }: LayoutProps) {
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Sidebar Header */}
-        <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
+        <header className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
           <h1 className="text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
             {state.currentUser?.salonName || 'Glam Stock'}
           </h1>
           <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            aria-label="Cerrar menú"
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
+        </header>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 overflow-y-auto">
-          <div className="space-y-2">
+        <nav className="flex-1 px-4 py-6 overflow-y-auto" aria-label="Navegación principal">
+          <ul className="space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = state.currentView === item.id;
               
               return (
-                <button
-                  key={item.id}
-                  onClick={() => handleNavClick(item.id)}
-                  className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-105'
-                      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                >
-                  <Icon className="w-5 h-5 mr-3" />
-                  {item.name}
-                </button>
+                <li key={item.id}>
+                  <button
+                    onClick={() => handleNavClick(item.id)}
+                    className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-105'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    <Icon className="w-5 h-5 mr-3" aria-hidden="true" />
+                    {item.name}
+                  </button>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </nav>
 
         {/* User Info and Logout */}
-        <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center mb-4">
+        <footer className="p-4 border-t border-gray-200">
+          <section className="flex items-center mb-4">
             <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center mr-3">
-              <span className="text-white font-semibold text-sm">
+              <span className="text-white font-semibold text-sm" aria-label="Iniciales del usuario">
                 {state.currentUser?.name.split(' ').map(n => n[0]).join('').toUpperCase()}
               </span>
             </div>
@@ -106,16 +110,16 @@ export function Layout({ children }: LayoutProps) {
                  state.currentUser?.role === 'manager' ? 'Gerente' : 'Empleado'}
               </p>
             </div>
-          </div>
+          </section>
           <button
             onClick={handleLogout}
             className="w-full flex items-center px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900 rounded-lg transition-all duration-200"
           >
-            <LogOut className="w-4 h-4 mr-3" />
+            <LogOut className="w-4 h-4 mr-3" aria-hidden="true" />
             Cerrar Sesión
           </button>
-        </div>
-      </div>
+        </footer>
+      </aside>
 
       {/* Main content area */}
       <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
@@ -127,6 +131,7 @@ export function Layout({ children }: LayoutProps) {
               <button
                 onClick={() => setSidebarOpen(true)}
                 className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Abrir menú"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -134,8 +139,11 @@ export function Layout({ children }: LayoutProps) {
 
             {/* Right side - Notification */}
             <div className="flex items-center">
-              <button className="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors">
-                <Bell className="w-5 h-5 text-gray-600" />
+              <button 
+                className="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label={`Notificaciones ${unreadCount > 0 ? `(${unreadCount} sin leer)` : ''}`}
+              >
+                <Bell className="w-5 h-5 text-gray-600" aria-hidden="true" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -150,8 +158,9 @@ export function Layout({ children }: LayoutProps) {
                   onClick={handleLogout}
                   className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
                   title="Cerrar Sesión"
+                  aria-label="Cerrar Sesión"
                 >
-                  <LogOut className="w-5 h-5 text-gray-600" />
+                  <LogOut className="w-5 h-5 text-gray-600" aria-hidden="true" />
                 </button>
               </div>
             </div>
