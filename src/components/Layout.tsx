@@ -85,14 +85,18 @@ export function Layout({ children }: LayoutProps) {
       <div className="lg:pl-64 flex flex-col min-h-screen">
         {/* Top bar */}
         <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-6">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+          <div className="h-16 px-6 flex items-center justify-between">
+            {/* Left side - Mobile menu button */}
+            <div className="flex items-center">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+            </div>
 
+            {/* Right side - Notification */}
             <div className="flex items-center">
               <button className="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors">
                 <Bell className="w-5 h-5 text-gray-600" />
