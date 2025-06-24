@@ -16,14 +16,19 @@ import { es } from 'date-fns/locale';
 
 export function Inventory() {
   const { state, dispatch } = useApp();
+  
+  // Filter products by current user's salon
+  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+  const salonSuppliers = state.suppliers.filter(s => s.salonId === state.currentUser?.salonId);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  const categories = [...new Set(state.products.map(p => p.category))];
+  const categories = [...new Set(salonProducts.map(p => p.category))];
   
-  const filteredProducts = state.products.filter(product => {
+  const filteredProducts = salonProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.brand.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || product.category === selectedCategory;
@@ -187,7 +192,7 @@ export function Inventory() {
           </div>
 
           <div className="flex items-center text-sm text-gray-600">
-            {filteredProducts.length} de {state.products.length} productos
+            {filteredProducts.length} de {salonProducts.length} productos
           </div>
         </div>
       </div>
@@ -215,13 +220,14 @@ export function Inventory() {
             setShowForm(false);
             setEditingProduct(null);
           }}
+          salonSuppliers={salonSuppliers}
         />
       )}
     </div>
   );
 }
 
-function ProductForm({ product, onClose }: { product: Product | null; onClose: () => void }) {
+function ProductForm({ product, onClose, salonSuppliers }: { product: Product | null; onClose: () => void; salonSuppliers: any[] }) {
   const { state, dispatch } = useApp();
   const [formData, setFormData] = useState({
     name: product?.name || '',
@@ -240,6 +246,7 @@ function ProductForm({ product, onClose }: { product: Product | null; onClose: (
     
     const productData: Product = {
       id: product?.id || Date.now().toString(),
+      salonId: state.currentUser?.salonId || '',
       name: formData.name,
       brand: formData.brand,
       category: formData.category,
@@ -374,7 +381,7 @@ function ProductForm({ product, onClose }: { product: Product | null; onClose: (
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               >
                 <option value="">Seleccionar proveedor</option>
-                {state.suppliers.map(supplier => (
+                {salonSuppliers.map(supplier => (
                   <option key={supplier.id} value={supplier.id}>{supplier.name}</option>
                 ))}
               </select>
