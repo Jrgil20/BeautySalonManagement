@@ -88,17 +88,17 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex items-center justify-between h-16 px-6">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
             >
               <Menu className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            <div className="flex items-center">
+              <button className="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors">
                 <Bell className="w-5 h-5 text-gray-600" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-500 rounded-full">
-                    {unreadCount}
+                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
+                    {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
               </button>
