@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { Service } from '../types';
+import { Service, ServiceProduct } from '../types';
 import { 
   Plus, 
   Search, 
@@ -9,7 +9,9 @@ import {
   Clock,
   DollarSign,
   Scissors,
-  Eye
+  Eye,
+  X,
+  Package
 } from 'lucide-react';
 
 export function Services() {
@@ -219,8 +221,60 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
     price: service?.price || 0,
     duration: service?.duration || 0,
     category: service?.category || '',
-    products: service?.products || [],
   });
+
+  // State for managing inventory products
+  const [serviceProducts, setServiceProducts] = useState<ServiceProduct[]>(service?.products || []);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [productQuantity, setProductQuantity] = useState(0);
+
+  const availableProducts = state.products.filter(product => product.stock > 0);
+
+  const addProductToService = () => {
+    if (!selectedProductId || productQuantity <= 0) return;
+
+    const selectedProduct = state.products.find(p => p.id === selectedProductId);
+    if (!selectedProduct) return;
+
+    // Check if product is already added
+    const existingProductIndex = serviceProducts.findIndex(sp => sp.productId === selectedProductId);
+    
+    const newServiceProduct: ServiceProduct = {
+      productId: selectedProductId,
+      quantity: productQuantity,
+      cost: selectedProduct.unitPrice * productQuantity,
+    };
+
+    if (existingProductIndex >= 0) {
+      // Update existing product
+      const updatedProducts = [...serviceProducts];
+      updatedProducts[existingProductIndex] = newServiceProduct;
+      setServiceProducts(updatedProducts);
+    } else {
+      // Add new product
+      setServiceProducts([...serviceProducts, newServiceProduct]);
+    }
+
+    // Reset selection
+    setSelectedProductId('');
+    setProductQuantity(0);
+  };
+
+  const removeProductFromService = (productId: string) => {
+    setServiceProducts(serviceProducts.filter(sp => sp.productId !== productId));
+  };
+
+  const getProductName = (productId: string) => {
+    const product = state.products.find(p => p.id === productId);
+    return product?.name || 'Producto no encontrado';
+  };
+
+  const getProductUnit = (productId: string) => {
+    const product = state.products.find(p => p.id === productId);
+    return product?.unit || '';
+  };
+
+  const totalProductsCost = serviceProducts.reduce((total, product) => total + product.cost, 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -232,7 +286,7 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
       price: formData.price,
       duration: formData.duration,
       category: formData.category,
-      products: formData.products,
+      products: serviceProducts,
       isActive: true,
       createdAt: service?.createdAt || new Date(),
       updatedAt: new Date(),
@@ -249,72 +303,177 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <h2 className="text-xl font-bold mb-4">
             {service ? 'Editar Servicio' : 'Nuevo Servicio'}
           </h2>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Service Information */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio ($)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="0.01"
+                      value={formData.price}
+                      onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duración (min)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={formData.duration}
+                      onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Inventory Products Section */}
+              <div className="space-y-4">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <Package className="w-5 h-5 mr-2" />
+                    Insumos de Inventario
+                  </h3>
+
+                  {/* Add Product Form */}
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                      <select
+                        value={selectedProductId}
+                        onChange={(e) => setSelectedProductId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Seleccionar producto</option>
+                        {availableProducts.map(product => (
+                          <option key={product.id} value={product.id}>
+                            {product.name} - {product.brand} (Stock: {product.stock} {product.unit})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={productQuantity}
+                        onChange={(e) => setProductQuantity(Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Cantidad a usar"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={addProductToService}
+                      disabled={!selectedProductId || productQuantity <= 0}
+                      className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Agregar Insumo
+                    </button>
+                  </div>
+
+                  {/* Selected Products List */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700">Productos seleccionados:</h4>
+                    {serviceProducts.length === 0 ? (
+                      <p className="text-sm text-gray-500 italic">No hay productos seleccionados</p>
+                    ) : (
+                      <div className="max-h-40 overflow-y-auto space-y-2">
+                        {serviceProducts.map((serviceProduct, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">
+                                {getProductName(serviceProduct.productId)}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                Cantidad: {serviceProduct.quantity} {getProductUnit(serviceProduct.productId)} - 
+                                Costo: ${serviceProduct.cost.toFixed(2)}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeProductFromService(serviceProduct.productId)}
+                              className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {serviceProducts.length > 0 && (
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-sm font-medium text-gray-900">
+                          Costo total de insumos: <span className="text-red-600">${totalProductsCost.toFixed(2)}</span>
+                        </p>
+                        {formData.price > 0 && (
+                          <p className="text-sm text-gray-600">
+                            Margen de ganancia: <span className={`font-medium ${
+                              ((formData.price - totalProductsCost) / formData.price * 100) >= 50 ? 'text-green-600' : 
+                              ((formData.price - totalProductsCost) / formData.price * 100) >= 30 ? 'text-orange-600' : 'text-red-600'
+                            }`}>
+                              {((formData.price - totalProductsCost) / formData.price * 100).toFixed(1)}%
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-              <textarea
-                required
-                rows={3}
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Precio ($)</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Duración (min)</label>
-                <input
-                  type="number"
-                  required
-                  min="0"
-                  value={formData.duration}
-                  onChange={(e) => setFormData({ ...formData, duration: Number(e.target.value) })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            <div className="flex space-x-4 pt-4">
+            <div className="flex space-x-4 pt-4 border-t border-gray-200">
               <button
                 type="submit"
                 className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200"
@@ -342,6 +501,11 @@ function ServiceDetailModal({ service, onClose }: { service: Service; onClose: (
   const getProductName = (productId: string) => {
     const product = state.products.find(p => p.id === productId);
     return product?.name || 'Producto no encontrado';
+  };
+
+  const getProductUnit = (productId: string) => {
+    const product = state.products.find(p => p.id === productId);
+    return product?.unit || '';
   };
 
   const totalCost = service.products.reduce((total, product) => total + product.cost, 0);
@@ -379,7 +543,7 @@ function ServiceDetailModal({ service, onClose }: { service: Service; onClose: (
                     <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                       <span className="text-sm">{getProductName(product.productId)}</span>
                       <div className="text-right">
-                        <div className="text-sm">Cantidad: {product.quantity}</div>
+                        <div className="text-sm">Cantidad: {product.quantity} {getProductUnit(product.productId)}</div>
                         <div className="text-sm font-medium">${product.cost.toFixed(2)}</div>
                       </div>
                     </div>
