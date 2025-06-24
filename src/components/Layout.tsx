@@ -54,7 +54,7 @@ export function Layout({ children }: LayoutProps) {
         {/* Sidebar Header */}
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
           <h1 className="text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-            Beauty Salon
+            {state.currentUser?.salonName || 'Glam Stock'}
           </h1>
           <button
             onClick={() => setSidebarOpen(false)}

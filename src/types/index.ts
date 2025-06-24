@@ -9,6 +9,7 @@ export interface Product {
   unitPrice: number;
   expirationDate: Date;
   supplierId: string;
+  salonId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,6 +23,7 @@ export interface Service {
   category: string;
   products: ServiceProduct[];
   isActive: boolean;
+  salonId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +42,7 @@ export interface Supplier {
   phone: string;
   address: string;
   products: string[];
+  salonId: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -85,6 +88,8 @@ export interface User {
   role: 'admin' | 'employee' | 'manager';
   avatar?: string;
   isActive: boolean;
+  salonId: string;
+  salonName: string;
   lastLogin?: Date;
   createdAt: Date;
 }

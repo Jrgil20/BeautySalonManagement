@@ -17,14 +17,19 @@ import { es } from 'date-fns/locale';
 export function Dashboard() {
   const { state } = useApp();
 
+  // Filter data by current user's salon
+  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+  const salonServices = state.services.filter(s => s.salonId === state.currentUser?.salonId);
+  const salonSuppliers = state.suppliers.filter(s => s.salonId === state.currentUser?.salonId);
+
   // Calculate KPIs
-  const totalProducts = state.products.length;
-  const lowStockItems = state.products.filter(p => p.stock <= p.minStock).length;
-  const expiringItems = state.products.filter(p => 
+  const totalProducts = salonProducts.length;
+  const lowStockItems = salonProducts.filter(p => p.stock <= p.minStock).length;
+  const expiringItems = salonProducts.filter(p => 
     differenceInDays(p.expirationDate, new Date()) <= 30
   ).length;
-  const totalServices = state.services.length;
-  const totalSuppliers = state.suppliers.length;
+  const totalServices = salonServices.length;
+  const totalSuppliers = salonSuppliers.length;
 
   // Mock financial data
   const monthlyRevenue = 15000;
@@ -32,13 +37,13 @@ export function Dashboard() {
   const profitMargin = ((monthlyRevenue - monthlyExpenses) / monthlyRevenue * 100);
 
   // Chart data
-  const stockData = state.products.slice(0, 6).map(product => ({
+  const stockData = salonProducts.slice(0, 6).map(product => ({
     name: product.name.length > 15 ? product.name.substring(0, 15) + '...' : product.name,
     stock: product.stock,
     minStock: product.minStock,
   }));
 
-  const categoryData = state.products.reduce((acc, product) => {
+  const categoryData = salonProducts.reduce((acc, product) => {
     const existing = acc.find(item => item.name === product.category);
     if (existing) {
       existing.value += 1;
