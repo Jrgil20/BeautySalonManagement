@@ -1,4 +1,4 @@
-import { Product, Service, Supplier } from '../types';
+import { Product, Service, Supplier, User } from '../types';
 import { addDays, subDays } from 'date-fns';
 
 export const mockProducts: Product[] = [
@@ -167,5 +167,58 @@ export const mockSuppliers: Supplier[] = [
     products: ['4'],
     createdAt: subDays(new Date(), 80),
     updatedAt: new Date(),
+  },
+];
+
+export const mockUsers: User[] = [
+  {
+    id: '1',
+    email: 'admin@beautysalon.com',
+    password: 'admin123',
+    name: 'María Administradora',
+    role: 'admin',
+    isActive: true,
+    lastLogin: subDays(new Date(), 1),
+    createdAt: subDays(new Date(), 365),
+  },
+  {
+    id: '2',
+    email: 'manager@beautysalon.com',
+    password: 'manager123',
+    name: 'Carlos Gerente',
+    role: 'manager',
+    isActive: true,
+    lastLogin: subDays(new Date(), 2),
+    createdAt: subDays(new Date(), 200),
+  },
+  {
+    id: '3',
+    email: 'employee1@beautysalon.com',
+    password: 'emp123',
+    name: 'Ana Estilista',
+    role: 'employee',
+    isActive: true,
+    lastLogin: subDays(new Date(), 3),
+    createdAt: subDays(new Date(), 150),
+  },
+  {
+    id: '4',
+    email: 'employee2@beautysalon.com',
+    password: 'emp456',
+    name: 'Laura Manicurista',
+    role: 'employee',
+    isActive: true,
+    lastLogin: subDays(new Date(), 5),
+    createdAt: subDays(new Date(), 100),
+  },
+  {
+    id: '5',
+    email: 'employee3@beautysalon.com',
+    password: 'emp789',
+    name: 'Sofia Esteticista',
+    role: 'employee',
+    isActive: false,
+    lastLogin: subDays(new Date(), 30),
+    createdAt: subDays(new Date(), 80),
   },
 ];

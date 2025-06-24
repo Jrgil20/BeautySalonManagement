@@ -76,3 +76,15 @@ export interface KPIData {
   monthlyRevenue: number;
   profitMargin: number;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  role: 'admin' | 'employee' | 'manager';
+  avatar?: string;
+  isActive: boolean;
+  lastLogin?: Date;
+  createdAt: Date;
+}

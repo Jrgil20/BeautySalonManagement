@@ -1,14 +1,16 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Product, Service, Supplier, InventoryMovement, Notification, KPIData } from '../types';
+import { Product, Service, Supplier, InventoryMovement, Notification, KPIData, User } from '../types';
 
 interface AppState {
   products: Product[];
   services: Service[];
   suppliers: Supplier[];
+  users: User[];
   movements: InventoryMovement[];
   notifications: Notification[];
   kpis: KPIData;
   currentView: string;
+  currentUser: User | null;
 }
 
 type AppAction =
@@ -24,6 +26,9 @@ type AppAction =
   | { type: 'ADD_SUPPLIER'; payload: Supplier }
   | { type: 'UPDATE_SUPPLIER'; payload: Supplier }
   | { type: 'DELETE_SUPPLIER'; payload: string }
+  | { type: 'SET_USERS'; payload: User[] }
+  | { type: 'LOGIN_USER'; payload: User }
+  | { type: 'LOGOUT_USER' }
   | { type: 'ADD_MOVEMENT'; payload: InventoryMovement }
   | { type: 'SET_NOTIFICATIONS'; payload: Notification[] }
   | { type: 'ADD_NOTIFICATION'; payload: Notification }
@@ -35,6 +40,7 @@ const initialState: AppState = {
   products: [],
   services: [],
   suppliers: [],
+  users: [],
   movements: [],
   notifications: [],
   kpis: {
@@ -48,6 +54,7 @@ const initialState: AppState = {
     profitMargin: 0,
   },
   currentView: 'dashboard',
+  currentUser: null,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -94,6 +101,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         suppliers: state.suppliers.filter(s => s.id !== action.payload),
       };
+    case 'SET_USERS':
+      return { ...state, users: action.payload };
+    case 'LOGIN_USER':
+      return { ...state, currentUser: action.payload, currentView: 'dashboard' };
+    case 'LOGOUT_USER':
+      return { ...state, currentUser: null, currentView: 'login' };
     case 'ADD_MOVEMENT':
       return { ...state, movements: [...state.movements, action.payload] };
     case 'SET_NOTIFICATIONS':
