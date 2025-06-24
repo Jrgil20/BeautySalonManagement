@@ -15,11 +15,16 @@ import {
 
 export function Suppliers() {
   const { state, dispatch } = useApp();
+  
+  // Filter suppliers by current user's salon
+  const salonSuppliers = state.suppliers.filter(s => s.salonId === state.currentUser?.salonId);
+  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
 
-  const filteredSuppliers = state.suppliers.filter(supplier =>
+  const filteredSuppliers = salonSuppliers.filter(supplier =>
     supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.contactPerson.toLowerCase().includes(searchTerm.toLowerCase()) ||
     supplier.email.toLowerCase().includes(searchTerm.toLowerCase())
@@ -37,7 +42,7 @@ export function Suppliers() {
   };
 
   const getSupplierProducts = (supplierId: string) => {
-    return state.products.filter(product => product.supplierId === supplierId);
+    return salonProducts.filter(product => product.supplierId === supplierId);
   };
 
   const SupplierCard = ({ supplier }: { supplier: Supplier }) => {
@@ -149,7 +154,7 @@ export function Suppliers() {
           />
         </div>
         <div className="mt-4 text-sm text-gray-600">
-          {filteredSuppliers.length} de {state.suppliers.length} proveedores
+          {filteredSuppliers.length} de {salonSuppliers.length} proveedores
         </div>
       </div>
 
@@ -199,6 +204,7 @@ function SupplierForm({ supplier, onClose }: { supplier: Supplier | null; onClos
     
     const supplierData: Supplier = {
       id: supplier?.id || Date.now().toString(),
+      salonId: state.currentUser?.salonId || '',
       name: formData.name,
       contactPerson: formData.contactPerson,
       email: formData.email,

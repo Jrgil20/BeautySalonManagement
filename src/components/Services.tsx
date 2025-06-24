@@ -16,15 +16,20 @@ import {
 
 export function Services() {
   const { state, dispatch } = useApp();
+  
+  // Filter data by current user's salon
+  const salonServices = state.services.filter(s => s.salonId === state.currentUser?.salonId);
+  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [viewingService, setViewingService] = useState<Service | null>(null);
 
-  const categories = [...new Set(state.services.map(s => s.category))];
+  const categories = [...new Set(salonServices.map(s => s.category))];
   
-  const filteredServices = state.services.filter(service => {
+  const filteredServices = salonServices.filter(service => {
     const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          service.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || service.category === selectedCategory;
@@ -171,7 +176,7 @@ export function Services() {
           </div>
 
           <div className="flex items-center text-sm text-gray-600">
-            {filteredServices.length} de {state.services.filter(s => s.isActive).length} servicios
+            {filteredServices.length} de {salonServices.filter(s => s.isActive).length} servicios
           </div>
         </div>
       </div>
@@ -228,12 +233,13 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
   const [selectedProductId, setSelectedProductId] = useState('');
   const [productQuantity, setProductQuantity] = useState(0);
 
-  const availableProducts = state.products.filter(product => product.stock > 0);
+  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+  const availableProducts = salonProducts.filter(product => product.stock > 0);
 
   const addProductToService = () => {
     if (!selectedProductId || productQuantity <= 0) return;
 
-    const selectedProduct = state.products.find(p => p.id === selectedProductId);
+    const selectedProduct = salonProducts.find(p => p.id === selectedProductId);
     if (!selectedProduct) return;
 
     // Check if product is already added
@@ -265,12 +271,12 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
   };
 
   const getProductName = (productId: string) => {
-    const product = state.products.find(p => p.id === productId);
+    const product = salonProducts.find(p => p.id === productId);
     return product?.name || 'Producto no encontrado';
   };
 
   const getProductUnit = (productId: string) => {
-    const product = state.products.find(p => p.id === productId);
+    const product = salonProducts.find(p => p.id === productId);
     return product?.unit || '';
   };
 
@@ -281,6 +287,7 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
     
     const serviceData: Service = {
       id: service?.id || Date.now().toString(),
+      salonId: state.currentUser?.salonId || '',
       name: formData.name,
       description: formData.description,
       price: formData.price,
@@ -498,13 +505,15 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
 function ServiceDetailModal({ service, onClose }: { service: Service; onClose: () => void }) {
   const { state } = useApp();
   
+  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+  
   const getProductName = (productId: string) => {
-    const product = state.products.find(p => p.id === productId);
+    const product = salonProducts.find(p => p.id === productId);
     return product?.name || 'Producto no encontrado';
   };
 
   const getProductUnit = (productId: string) => {
-    const product = state.products.find(p => p.id === productId);
+    const product = salonProducts.find(p => p.id === productId);
     return product?.unit || '';
   };
 
