@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, 
   Package, 
@@ -7,9 +8,11 @@ import {
   Users, 
   Bell,
   Menu,
-  X
+  X,
+  User
 } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
+import { LogoutButton } from './auth/LogoutButton';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,6 +20,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { state, dispatch } = useApp();
+  const { state: authState } = useAuth();
   const { unreadCount } = useNotifications();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
@@ -59,6 +63,23 @@ export function Layout({ children }: LayoutProps) {
           </button>
         </div>
 
+        {/* User Info */}
+        {authState.user && (
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full flex items-center justify-center">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-900">
+                  {authState.user.firstName} {authState.user.lastName}
+                </p>
+                <p className="text-xs text-gray-500 capitalize">{authState.user.role}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Navigation */}
         <nav className="flex-1 px-4 py-6 overflow-y-auto">
           <div className="space-y-2">
@@ -83,10 +104,15 @@ export function Layout({ children }: LayoutProps) {
             })}
           </div>
         </nav>
+
+        {/* Logout Button */}
+        <div className="p-4 border-t border-gray-200">
+          <LogoutButton className="w-full justify-center" />
+        </div>
       </div>
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col min-h-screen lg:ml-0">
+      <div className="flex-1 flex flex-col min-h-screen">
         {/* Top header bar */}
         <header className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
           <div className="h-16 px-6 flex items-center justify-between">
@@ -100,8 +126,16 @@ export function Layout({ children }: LayoutProps) {
               </button>
             </div>
 
-            {/* Right side - Notification */}
-            <div className="flex items-center">
+            {/* Right side - User info and notifications */}
+            <div className="flex items-center space-x-4">
+              {/* User info for desktop */}
+              {authState.user && (
+                <div className="hidden lg:flex items-center text-sm text-gray-600">
+                  <span>Bienvenido, {authState.user.firstName}</span>
+                </div>
+              )}
+
+              {/* Notification bell */}
               <button className="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors">
                 <Bell className="w-5 h-5 text-gray-600" />
                 {unreadCount > 0 && (
@@ -110,6 +144,11 @@ export function Layout({ children }: LayoutProps) {
                   </span>
                 )}
               </button>
+
+              {/* Desktop logout button */}
+              <div className="hidden lg:block">
+                <LogoutButton showText={false} />
+              </div>
             </div>
           </div>
         </header>

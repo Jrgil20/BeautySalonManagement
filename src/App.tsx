@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
+import { AuthProvider } from './contexts/AuthContext';
 import { AppProvider, useApp } from './contexts/AppContext';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { Inventory } from './components/Inventory';
@@ -31,17 +33,21 @@ function AppContent() {
   };
 
   return (
-    <Layout>
-      {renderCurrentView()}
-    </Layout>
+    <ProtectedRoute>
+      <Layout>
+        {renderCurrentView()}
+      </Layout>
+    </ProtectedRoute>
   );
 }
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <AppContent />
+      </AppProvider>
+    </AuthProvider>
   );
 }
 
