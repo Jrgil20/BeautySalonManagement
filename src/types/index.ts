@@ -61,13 +61,15 @@ export interface InventoryMovement {
 
 export interface Notification {
   id: string;
-  type: 'LOW_STOCK' | 'EXPIRING' | 'EXPIRED' | 'REORDER';
+  type: 'LOW_STOCK' | 'EXPIRING' | 'EXPIRED' | 'REORDER' | 'SYSTEM';
   title: string;
   message: string;
   isRead: boolean;
   priority: 'LOW' | 'MEDIUM' | 'HIGH';
   createdAt: Date;
   relatedId?: string;
+  actionUrl?: string; // URL para navegar cuando se hace clic en la notificación
+  metadata?: Record<string, any>; // Datos adicionales para la notificación
 }
 
 export interface KPIData {

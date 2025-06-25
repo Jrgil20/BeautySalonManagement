@@ -34,6 +34,8 @@ type AppAction =
   | { type: 'SET_NOTIFICATIONS'; payload: Notification[] }
   | { type: 'ADD_NOTIFICATION'; payload: Notification }
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
+  | { type: 'CLEAR_ALL_NOTIFICATIONS' }
+  | { type: 'REMOVE_NOTIFICATION'; payload: string }
   | { type: 'UPDATE_KPIS'; payload: Partial<KPIData> }
   | { type: 'SET_CURRENT_VIEW'; payload: string }
   | { type: 'SET_INVENTORY_FILTER'; payload: InventoryFilterType | null };

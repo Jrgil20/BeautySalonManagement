@@ -10,8 +10,11 @@ export function useNotifications() {
       const notifications = [];
       const now = new Date();
 
+      // Filter products by current user's salon
+      const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+
       // Check for low stock
-      state.products.forEach(product => {
+      salonProducts.forEach(product => {
         if (product.stock <= product.minStock) {
           notifications.push({
             id: `low-stock-${product.id}`,
@@ -27,7 +30,7 @@ export function useNotifications() {
       });
 
       // Check for expiring products
-      state.products.forEach(product => {
+      salonProducts.forEach(product => {
         const daysUntilExpiration = differenceInDays(product.expirationDate, now);
         
         if (daysUntilExpiration <= 0) {
@@ -55,6 +58,22 @@ export function useNotifications() {
         }
       });
 
+      // Check for products that need reordering (stock very low)
+      salonProducts.forEach(product => {
+        if (product.stock <= Math.ceil(product.minStock * 0.5) && product.stock > 0) {
+          notifications.push({
+            id: `reorder-${product.id}`,
+            type: 'REORDER' as const,
+            title: 'Reabastecer Producto',
+            message: `${product.name} necesita ser reabastecido pronto (${product.stock} ${product.unit} restantes)`,
+            isRead: false,
+            priority: 'MEDIUM' as const,
+            createdAt: now,
+            relatedId: product.id,
+          });
+        }
+      });
+
       // Update notifications
       dispatch({ type: 'SET_NOTIFICATIONS', payload: notifications });
     };
@@ -63,11 +82,18 @@ export function useNotifications() {
     const interval = setInterval(checkNotifications, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, [state.products, dispatch]);
+  }, [state.products, state.currentUser?.salonId, dispatch]);
 
   return {
     notifications: state.notifications,
     unreadCount: state.notifications.filter(n => !n.isRead).length,
     markAsRead: (id: string) => dispatch({ type: 'MARK_NOTIFICATION_READ', payload: id }),
+    markAllAsRead: () => {
+      state.notifications.forEach(notification => {
+        if (!notification.isRead) {
+          dispatch({ type: 'MARK_NOTIFICATION_READ', payload: notification.id });
+        }
+      });
+    },
   };
 }
