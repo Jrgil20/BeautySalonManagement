@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { Service, ServiceProduct } from '../types';
+import { DEFAULT_LABOR_RATE_PER_HOUR } from '../config/constants';
 import { 
   Plus, 
   Search, 
@@ -51,6 +52,18 @@ export function Services() {
   };
 
   const calculateServiceCost = (service: Service) => {
+    const productsCost = service.products.reduce((total, product) => total + product.cost, 0);
+    const laborRate = service.laborRate || DEFAULT_LABOR_RATE_PER_HOUR;
+    const laborCost = (service.duration / 60) * laborRate; // Convertir minutos a horas
+    return productsCost + laborCost;
+  };
+
+  const calculateLaborCost = (service: Service) => {
+    const laborRate = service.laborRate || DEFAULT_LABOR_RATE_PER_HOUR;
+    return (service.duration / 60) * laborRate;
+  };
+
+  const calculateProductsCost = (service: Service) => {
     return service.products.reduce((total, product) => total + product.cost, 0);
   };
 
@@ -60,7 +73,9 @@ export function Services() {
   };
 
   const ServiceCard = ({ service }: { service: Service }) => {
-    const cost = calculateServiceCost(service);
+    const totalCost = calculateServiceCost(service);
+    const productsCost = calculateProductsCost(service);
+    const laborCost = calculateLaborCost(service);
     const profit = calculateProfitMargin(service);
     
     return (
@@ -114,13 +129,23 @@ export function Services() {
           </div>
 
           <div className="pt-4 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-gray-600">Costo de insumos:</span>
-              <span className="text-sm font-medium text-red-600">${cost.toFixed(2)}</span>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Insumos:</span>
+                <span className="text-xs font-medium text-orange-600">${productsCost.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Mano de obra:</span>
+                <span className="text-xs font-medium text-blue-600">${laborCost.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t pt-2">
+                <span className="text-sm text-gray-600">Costo total:</span>
+                <span className="text-sm font-medium text-red-600">${totalCost.toFixed(2)}</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mt-2">
               <span className="text-sm text-gray-600">Ganancia:</span>
-              <span className="text-sm font-medium text-green-600">${(service.price - cost).toFixed(2)}</span>
+              <span className="text-sm font-medium text-green-600">${(service.price - totalCost).toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-600">Margen:</span>
@@ -229,6 +254,7 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
     price: service?.price || 0,
     duration: service?.duration || 0,
     category: service?.category || '',
+    laborRate: service?.laborRate || DEFAULT_LABOR_RATE_PER_HOUR,
   });
 
   // State for managing inventory products
@@ -308,6 +334,18 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
           delete newErrors.category;
         }
         break;
+
+      case 'laborRate':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.laborRate = 'La tarifa por hora no puede ser negativa';
+        } else if (value === 0) {
+          newErrors.laborRate = 'La tarifa por hora debe ser mayor a 0';
+        } else if (value > 999.99) {
+          newErrors.laborRate = 'La tarifa por hora no puede exceder €999.99';
+        } else {
+          delete newErrors.laborRate;
+        }
+        break;
     }
 
     setErrors(newErrors);
@@ -316,7 +354,7 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
 
   // Validar todos los campos
   const validateAllFields = () => {
-    const fields = ['name', 'description', 'price', 'duration', 'category'];
+    const fields = ['name', 'description', 'price', 'duration', 'category', 'laborRate'];
     let isValid = true;
     
     fields.forEach(field => {
@@ -497,16 +535,18 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tarifa/Hora (€) *</label>
                     <input
-                      type="text"
+                      type="number"
                       required
-                      value={formData.category}
-                      onChange={(e) => handleFieldChange('category', e.target.value)}
+                      min="0"
+                      step="0.01"
+                      value={formData.laborRate === 0 ? '' : formData.laborRate}
+                      onChange={(e) => handleFieldChange('laborRate', Number(e.target.value))}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
-                        errors.category ? 'border-red-300' : 'border-gray-300'
+                        errors.laborRate ? 'border-red-300' : 'border-gray-300'
                       }`}
-                      placeholder="Ej: Cabello"
+                      placeholder={`Por defecto: €${DEFAULT_LABOR_RATE_PER_HOUR}`}
                     />
                     {errors.category && (
                       <p className="text-red-600 text-xs mt-1">{errors.category}</p>
@@ -703,19 +743,40 @@ function ServiceDetailModal({ service, onClose }: { service: Service; onClose: (
             <div className="border-t pt-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <span className="text-gray-600">Costo total:</span>
-                  <p className="font-bold text-red-600">${totalCost.toFixed(2)}</p>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Costo de insumos:</span>
+                    <span className="font-medium text-orange-600">${productsCost.toFixed(2)}</span>
+                  </div>
                 </div>
                 <div>
-                  <span className="text-gray-600">Ganancia:</span>
-                  <p className="font-bold text-green-600">${profit.toFixed(2)}</p>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Costo mano de obra:</span>
+                    <span className="font-medium text-blue-600">${laborCost.toFixed(2)}</span>
+                  </div>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Costo total:</span>
+                    <span className="font-bold text-red-600">${totalCost.toFixed(2)}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Ganancia:</span>
+                    <span className="font-bold text-green-600">${profit.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
-              <div className="mt-2">
-                <span className="text-gray-600">Margen de ganancia:</span>
-                <p className={`font-bold text-lg ${profitMargin >= 50 ? 'text-green-600' : profitMargin >= 30 ? 'text-orange-600' : 'text-red-600'}`}>
-                  {profitMargin.toFixed(1)}%
-                </p>
+              <div className="mt-3 pt-2 border-t">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Margen de ganancia:</span>
+                  <span className={`font-bold text-lg ${profitMargin >= 50 ? 'text-green-600' : profitMargin >= 30 ? 'text-orange-600' : 'text-red-600'}`}>
+                    {profitMargin.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Tarifa: €{laborRate}/hora • Duración: {service.duration} min
+                </div>
               </div>
             </div>
           </div>

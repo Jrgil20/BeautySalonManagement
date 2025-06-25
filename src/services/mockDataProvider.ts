@@ -1,868 +1,833 @@
+import React, { useState } from 'react';
+import { useApp } from '../contexts/AppContext';
+import { Service, ServiceProduct } from '../types';
+import { DEFAULT_LABOR_RATE_PER_HOUR } from '../config/constants';
+import { DEFAULT_LABOR_RATE_PER_HOUR } from '../config/constants';
 import { 
-  DataProvider, 
-  ProductService, 
-  ServiceService, 
-  SupplierService, 
-  UserService,
-  MovementService,
-  NotificationService,
-  KPIService,
-  SalonConfigService,
-  CategoryService,
-  UnitService,
-  UserRoleService,
-  AppConfigService,
-  Product,
-  Service,
-  Supplier,
-  User,
-  InventoryMovement,
-  Notification,
-  KPIData,
-  SalonConfig,
-  Category,
-  Unit,
-  UserRole,
-  AppConfig,
-  QueryFilters,
-  PaginationOptions,
-  PaginatedResponse
-} from '../types';
-import { mockProducts, mockServices, mockSuppliers, mockUsers } from '../utils/mockData';
-import { differenceInDays } from 'date-fns';
+  Plus, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Clock,
+  DollarSign,
+  Scissors,
+  Eye,
+  X,
+  Package
+} from 'lucide-react';
 
-// ===== SERVICIOS MOCK =====
+export function Services() {
+  const { state, dispatch } = useApp();
+  
+  // Filter data by current user's salon
+  const salonServices = state.services.filter(s => s.salonId === state.currentUser?.salonId);
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingService, setEditingService] = useState<Service | null>(null);
+  const [viewingService, setViewingService] = useState<Service | null>(null);
 
-class MockProductService implements ProductService {
-  private products: Product[] = mockProducts;
+  const categories = [...new Set(salonServices.map(s => s.category))];
+  
+  const filteredServices = salonServices.filter(service => {
+    const matchesSearch = service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         service.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !selectedCategory || service.category === selectedCategory;
+    return matchesSearch && matchesCategory && service.isActive;
+  });
 
-  async getAll(salonId: string): Promise<Product[]> {
-    return this.products.filter(p => p.salonId === salonId);
-  }
+  const handleEdit = (service: Service) => {
+    setEditingService(service);
+    setShowForm(true);
+  };
 
-  async getById(id: string): Promise<Product | null> {
-    return this.products.find(p => p.id === id) || null;
-  }
-
-  async create(data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
-    const newProduct: Product = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.products.push(newProduct);
-    return newProduct;
-  }
-
-  async update(id: string, data: Partial<Product>): Promise<Product> {
-    const index = this.products.findIndex(p => p.id === id);
-    if (index === -1) throw new Error('Product not found');
+  const handleDelete = (id: string) => {
+    const service = salonServices.find(s => s.id === id);
+    if (!service) return;
     
-    this.products[index] = {
-      ...this.products[index],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return this.products[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.products.findIndex(p => p.id === id);
-    if (index === -1) return false;
-    
-    this.products.splice(index, 1);
-    return true;
-  }
-
-  async getByCategory(category: string, salonId: string): Promise<Product[]> {
-    return this.products.filter(p => p.category === category && p.salonId === salonId);
-  }
-
-  async getLowStock(salonId: string): Promise<Product[]> {
-    return this.products.filter(p => p.stock <= p.minStock && p.salonId === salonId);
-  }
-
-  async getExpiringSoon(days: number, salonId: string): Promise<Product[]> {
-    const now = new Date();
-    return this.products.filter(p => {
-      const daysUntilExpiration = differenceInDays(p.expirationDate, now);
-      return daysUntilExpiration <= days && p.salonId === salonId;
-    });
-  }
-
-  async updateStock(id: string, quantity: number): Promise<Product> {
-    const product = await this.getById(id);
-    if (!product) throw new Error('Product not found');
-    
-    return this.update(id, { stock: product.stock + quantity });
-  }
-}
-
-class MockServiceService implements ServiceService {
-  private services: Service[] = mockServices;
-
-  async getAll(salonId: string): Promise<Service[]> {
-    return this.services.filter(s => s.salonId === salonId);
-  }
-
-  async getById(id: string): Promise<Service | null> {
-    return this.services.find(s => s.id === id) || null;
-  }
-
-  async create(data: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>): Promise<Service> {
-    const newService: Service = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.services.push(newService);
-    return newService;
-  }
-
-  async update(id: string, data: Partial<Service>): Promise<Service> {
-    const index = this.services.findIndex(s => s.id === id);
-    if (index === -1) throw new Error('Service not found');
-    
-    this.services[index] = {
-      ...this.services[index],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return this.services[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.services.findIndex(s => s.id === id);
-    if (index === -1) return false;
-    
-    this.services.splice(index, 1);
-    return true;
-  }
-
-  async getByCategory(category: string, salonId: string): Promise<Service[]> {
-    return this.services.filter(s => s.category === category && s.salonId === salonId);
-  }
-
-  async getActive(salonId: string): Promise<Service[]> {
-    return this.services.filter(s => s.isActive && s.salonId === salonId);
-  }
-
-  async calculateProfitMargin(serviceId: string): Promise<number> {
-    const service = await this.getById(serviceId);
-    if (!service) return 0;
-    
-    const totalCost = service.products.reduce((sum, p) => sum + p.cost, 0);
-    return ((service.price - totalCost) / service.price) * 100;
-  }
-}
-
-class MockSupplierService implements SupplierService {
-  private suppliers: Supplier[] = mockSuppliers;
-
-  async getAll(salonId: string): Promise<Supplier[]> {
-    return this.suppliers.filter(s => s.salonId === salonId);
-  }
-
-  async getById(id: string): Promise<Supplier | null> {
-    return this.suppliers.find(s => s.id === id) || null;
-  }
-
-  async create(data: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>): Promise<Supplier> {
-    const newSupplier: Supplier = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.suppliers.push(newSupplier);
-    return newSupplier;
-  }
-
-  async update(id: string, data: Partial<Supplier>): Promise<Supplier> {
-    const index = this.suppliers.findIndex(s => s.id === id);
-    if (index === -1) throw new Error('Supplier not found');
-    
-    this.suppliers[index] = {
-      ...this.suppliers[index],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return this.suppliers[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.suppliers.findIndex(s => s.id === id);
-    if (index === -1) return false;
-    
-    this.suppliers.splice(index, 1);
-    return true;
-  }
-
-  async getByProduct(productId: string): Promise<Supplier[]> {
-    return this.suppliers.filter(s => s.products.includes(productId));
-  }
-
-  async getProducts(supplierId: string): Promise<Product[]> {
-    const supplier = await this.getById(supplierId);
-    if (!supplier) return [];
-    
-    return mockProducts.filter(p => supplier.products.includes(p.id));
-  }
-}
-
-class MockUserService implements UserService {
-  private users: User[] = mockUsers;
-
-  async getAll(salonId: string): Promise<User[]> {
-    return this.users.filter(u => u.salonId === salonId);
-  }
-
-  async getById(id: string): Promise<User | null> {
-    return this.users.find(u => u.id === id) || null;
-  }
-
-  async create(data: Omit<User, 'id' | 'createdAt'>): Promise<User> {
-    const newUser: User = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-    this.users.push(newUser);
-    return newUser;
-  }
-
-  async update(id: string, data: Partial<User>): Promise<User> {
-    const index = this.users.findIndex(u => u.id === id);
-    if (index === -1) throw new Error('User not found');
-    
-    this.users[index] = {
-      ...this.users[index],
-      ...data,
-    };
-    return this.users[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.users.findIndex(u => u.id === id);
-    if (index === -1) return false;
-    
-    this.users.splice(index, 1);
-    return true;
-  }
-
-  async authenticate(email: string, password: string): Promise<User | null> {
-    const user = this.users.find(u => u.email === email && u.password === password);
-    if (user && user.isActive) {
-      await this.updateLastLogin(user.id);
-      return user;
+    const confirmMessage = `¿Estás seguro de que quieres eliminar "${service.name}"?\n\nEsta acción no se puede deshacer.`;
+    if (window.confirm(confirmMessage)) {
+      dispatch({ type: 'DELETE_SERVICE', payload: id });
     }
-    return null;
-  }
+  };
 
-  async getBySalon(salonId: string): Promise<User[]> {
-    return this.users.filter(u => u.salonId === salonId);
-  }
+  const calculateServiceCost = (service: Service) => {
+    const productsCost = service.products.reduce((total, product) => total + product.cost, 0);
+    const laborRate = service.laborRate || DEFAULT_LABOR_RATE_PER_HOUR;
+    const laborCost = (service.duration / 60) * laborRate; // Convertir minutos a horas
+    return productsCost + laborCost;
+  };
 
-  async updateLastLogin(id: string): Promise<User> {
-    return this.update(id, { lastLogin: new Date() });
-  }
+  const calculateLaborCost = (service: Service) => {
+    const laborRate = service.laborRate || DEFAULT_LABOR_RATE_PER_HOUR;
+    return (service.duration / 60) * laborRate;
+  };
 
-  async changePassword(id: string, newPassword: string): Promise<boolean> {
-    try {
-      await this.update(id, { password: newPassword });
-      return true;
-    } catch {
-      return false;
+  const calculateProductsCost = (service: Service) => {
+    const productsCost = service.products.reduce((total, product) => total + product.cost, 0);
+    const laborRate = service.laborRate || DEFAULT_LABOR_RATE_PER_HOUR;
+    const laborCost = (service.duration / 60) * laborRate; // Convertir minutos a horas
+    return productsCost + laborCost;
+  };
+
+  const calculateLaborCost = (service: Service) => {
+    const laborRate = service.laborRate || DEFAULT_LABOR_RATE_PER_HOUR;
+    return (service.duration / 60) * laborRate;
+  };
+
+  const calculateProductsCost = (service: Service) => {
+    return service.products.reduce((total, product) => total + product.cost, 0);
+  };
+
+  const calculateProfitMargin = (service: Service) => {
+    const totalCost = calculateServiceCost(service);
+    const productsCost = calculateProductsCost(service);
+    const laborCost = calculateLaborCost(service);
+    return ((service.price - cost) / service.price * 100);
+  };
+
+  const ServiceCard = ({ service }: { service: Service }) => {
+    const totalCost = calculateServiceCost(service);
+    const productsCost = calculateProductsCost(service);
+    const laborCost = calculateLaborCost(service);
+    const profit = calculateProfitMargin(service);
+    
+    return (
+      <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{service.description}</p>
+              <span className="inline-block px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full mt-2">
+                {service.category}
+              </span>
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setViewingService(service)}
+                className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleEdit(service)}
+                className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <Edit className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleDelete(service.id)}
+                className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="flex items-center">
+              <Clock className="w-4 h-4 text-gray-400 mr-2" />
+              <div>
+                <p className="text-xs text-gray-500">Duración</p>
+                <p className="font-semibold text-gray-900">{service.duration} min</p>
+              </div>
+            </div>
+            <div className="flex items-center">
+              <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
+              <div>
+                <p className="text-xs text-gray-500">Precio</p>
+                <p className="font-semibold text-gray-900">${service.price.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-gray-100">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Insumos:</span>
+                <span className="text-xs font-medium text-orange-600">${productsCost.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Mano de obra:</span>
+                <span className="text-xs font-medium text-blue-600">${laborCost.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t pt-2">
+                <span className="text-sm text-gray-600">Costo total:</span>
+                <span className="text-sm font-medium text-red-600">${totalCost.toFixed(2)}</span>
+              </div>
+                <span className="text-xs font-medium text-orange-600">${productsCost.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">Mano de obra:</span>
+                <span className="text-xs font-medium text-blue-600">${laborCost.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between border-t pt-2">
+                <span className="text-sm text-gray-600">Costo total:</span>
+                <span className="text-sm font-medium text-red-600">${totalCost.toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between mt-2">
+              <span className="text-sm text-gray-600">Ganancia:</span>
+              <span className="text-sm font-medium text-green-600">${(service.price - totalCost).toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-600">Margen:</span>
+              <span className={`text-sm font-bold ${profit >= 50 ? 'text-green-600' : profit >= 30 ? 'text-orange-600' : 'text-red-600'}`}>
+                {profit.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-gray-900">Servicios</h1>
+        <button
+          onClick={() => {
+            setEditingService(null);
+            setShowForm(true);
+          }}
+          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          Agregar Servicio
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Buscar servicios..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+          
+          <div className="relative">
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
+            >
+              <option value="">Todas las categorías</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center text-sm text-gray-600">
+            {filteredServices.length} de {salonServices.filter(s => s.isActive).length} servicios
+          </div>
+        </div>
+      </div>
+
+      {/* Services Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredServices.map(service => (
+          <ServiceCard key={service.id} service={service} />
+        ))}
+      </div>
+
+      {filteredServices.length === 0 && (
+        <div className="text-center py-12">
+          <Scissors className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron servicios</h3>
+          <p className="text-gray-600">Intenta ajustar los filtros o agregar nuevos servicios.</p>
+        </div>
+      )}
+
+      {/* Service Form Modal */}
+      {showForm && (
+        <ServiceForm
+          service={editingService}
+          onClose={() => {
+            setShowForm(false);
+            setEditingService(null);
+          }}
+        />
+      )}
+
+      {/* Service Detail Modal */}
+      {viewingService && (
+        <ServiceDetailModal
+          service={viewingService}
+          onClose={() => setViewingService(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ServiceForm({ service, onClose }: { service: Service | null; onClose: () => void }) {
+  const { state, dispatch } = useApp();
+  const [formData, setFormData] = useState({
+    name: service?.name || '',
+    description: service?.description || '',
+    price: service?.price || 0,
+    duration: service?.duration || 0,
+    category: service?.category || '',
+    laborRate: service?.laborRate || DEFAULT_LABOR_RATE_PER_HOUR,
+    laborRate: service?.laborRate || DEFAULT_LABOR_RATE_PER_HOUR,
+  });
+
+  // State for managing inventory products
+  const [serviceProducts, setServiceProducts] = useState<ServiceProduct[]>(service?.products || []);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [productQuantity, setProductQuantity] = useState(0);
+
+  // Estado para errores de validación
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
+  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+  const availableProducts = salonProducts.filter(product => product.stock > 0);
+
+  // Función de validación
+  const validateField = (name: string, value: unknown) => {
+    const newErrors = { ...errors };
+    
+    switch (name) {
+      case 'name':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.name = 'El nombre del servicio es obligatorio';
+        } else if (value.trim().length < 2) {
+          newErrors.name = 'El nombre debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 100) {
+          newErrors.name = 'El nombre no puede exceder 100 caracteres';
+        } else {
+          delete newErrors.name;
+        }
+        break;
+
+      case 'description':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.description = 'La descripción es obligatoria';
+        } else if (value.trim().length < 10) {
+          newErrors.description = 'La descripción debe tener al menos 10 caracteres';
+        } else if (value.trim().length > 500) {
+          newErrors.description = 'La descripción no puede exceder 500 caracteres';
+        } else {
+          delete newErrors.description;
+        }
+        break;
+
+      case 'price':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.price = 'El precio no puede ser negativo';
+        } else if (value === 0) {
+          newErrors.price = 'El precio debe ser mayor a 0';
+        } else if (value > 999999.99) {
+          newErrors.price = 'El precio no puede exceder $999,999.99';
+        } else {
+          delete newErrors.price;
+        }
+        break;
+
+      case 'duration':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.duration = 'La duración no puede ser negativa';
+        } else if (value === 0) {
+          newErrors.duration = 'La duración debe ser mayor a 0';
+        } else if (!Number.isInteger(value)) {
+          newErrors.duration = 'La duración debe ser un número entero';
+        } else if (value > 480) {
+          newErrors.duration = 'La duración no puede exceder 480 minutos (8 horas)';
+        } else {
+          delete newErrors.duration;
+        }
+        break;
+
+      case 'category':
+        if (typeof value !== 'string' || !value.trim()) {
+          newErrors.category = 'La categoría es obligatoria';
+        } else if (value.trim().length < 2) {
+          newErrors.category = 'La categoría debe tener al menos 2 caracteres';
+        } else if (value.trim().length > 50) {
+          newErrors.category = 'La categoría no puede exceder 50 caracteres';
+        } else {
+          delete newErrors.category;
+        }
+        break;
+
+      case 'laborRate':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.laborRate = 'La tarifa por hora no puede ser negativa';
+        } else if (value === 0) {
+          newErrors.laborRate = 'La tarifa por hora debe ser mayor a 0';
+        } else if (value > 999.99) {
+          newErrors.laborRate = 'La tarifa por hora no puede exceder €999.99';
+        } else {
+          delete newErrors.laborRate;
+        }
+        break;
+
+      case 'laborRate':
+        if (typeof value !== 'number' || value < 0) {
+          newErrors.laborRate = 'La tarifa por hora no puede ser negativa';
+        } else if (value === 0) {
+          newErrors.laborRate = 'La tarifa por hora debe ser mayor a 0';
+        } else if (value > 999.99) {
+          newErrors.laborRate = 'La tarifa por hora no puede exceder €999.99';
+        } else {
+          delete newErrors.laborRate;
+        }
+        break;
     }
-  }
-}
 
-class MockMovementService implements MovementService {
-  private movements: InventoryMovement[] = [];
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-  async getAll(salonId: string): Promise<InventoryMovement[]> {
-    return this.movements.filter(m => {
-      // En un caso real, necesitarías relacionar movimientos con salones
-      return true;
+  // Validar todos los campos
+  const validateAllFields = () => {
+    const fields = ['name', 'description', 'price', 'duration', 'category', 'laborRate'];
+    let isValid = true;
+    
+    fields.forEach(field => {
+      if (!validateField(field, formData[field as keyof typeof formData])) {
+        isValid = false;
+      }
     });
-  }
+    
+    return isValid;
+  };
 
-  async getById(id: string): Promise<InventoryMovement | null> {
-    return this.movements.find(m => m.id === id) || null;
-  }
+  // Manejar cambios en los campos
+  const handleFieldChange = (name: string, value: unknown) => {
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
+  };
 
-  async create(data: Omit<InventoryMovement, 'id' | 'createdAt'>): Promise<InventoryMovement> {
-    const newMovement: InventoryMovement = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
+  const addProductToService = () => {
+    if (!selectedProductId || productQuantity <= 0) return;
+
+    const selectedProduct = salonProducts.find(p => p.id === selectedProductId);
+    if (!selectedProduct) return;
+
+    // Validar que la cantidad no exceda el stock disponible
+    if (productQuantity > selectedProduct.stock) {
+      alert(`No hay suficiente stock. Disponible: ${selectedProduct.stock} ${selectedProduct.unit}`);
+      return;
+    }
+
+    // Check if product is already added
+    const existingProductIndex = serviceProducts.findIndex(sp => sp.productId === selectedProductId);
+    
+    const newServiceProduct: ServiceProduct = {
+      productId: selectedProductId,
+      quantity: productQuantity,
+      cost: selectedProduct.unitPrice * productQuantity,
     };
-    this.movements.push(newMovement);
-    return newMovement;
-  }
 
-  async update(id: string, data: Partial<InventoryMovement>): Promise<InventoryMovement> {
-    const index = this.movements.findIndex(m => m.id === id);
-    if (index === -1) throw new Error('Movement not found');
-    
-    this.movements[index] = {
-      ...this.movements[index],
-      ...data,
-    };
-    return this.movements[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.movements.findIndex(m => m.id === id);
-    if (index === -1) return false;
-    
-    this.movements.splice(index, 1);
-    return true;
-  }
-
-  async getByProduct(productId: string): Promise<InventoryMovement[]> {
-    return this.movements.filter(m => m.productId === productId);
-  }
-
-  async getByDateRange(startDate: Date, endDate: Date, salonId: string): Promise<InventoryMovement[]> {
-    return this.movements.filter(m => {
-      const movementDate = m.createdAt;
-      return movementDate >= startDate && movementDate <= endDate;
-    });
-  }
-}
-
-class MockNotificationService implements NotificationService {
-  private notifications: Notification[] = [];
-
-  async getAll(salonId: string): Promise<Notification[]> {
-    return this.notifications;
-  }
-
-  async getById(id: string): Promise<Notification | null> {
-    return this.notifications.find(n => n.id === id) || null;
-  }
-
-  async create(data: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification> {
-    const newNotification: Notification = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-    };
-    this.notifications.push(newNotification);
-    return newNotification;
-  }
-
-  async update(id: string, data: Partial<Notification>): Promise<Notification> {
-    const index = this.notifications.findIndex(n => n.id === id);
-    if (index === -1) throw new Error('Notification not found');
-    
-    this.notifications[index] = {
-      ...this.notifications[index],
-      ...data,
-    };
-    return this.notifications[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.notifications.findIndex(n => n.id === id);
-    if (index === -1) return false;
-    
-    this.notifications.splice(index, 1);
-    return true;
-  }
-
-  async getUnread(userId: string): Promise<Notification[]> {
-    return this.notifications.filter(n => !n.isRead);
-  }
-
-  async markAsRead(id: string): Promise<Notification> {
-    return this.update(id, { isRead: true });
-  }
-
-  async markAllAsRead(userId: string): Promise<boolean> {
-    this.notifications.forEach(n => {
-      if (!n.isRead) n.isRead = true;
-    });
-    return true;
-  }
-
-  async createLowStockNotification(productId: string): Promise<Notification> {
-    return this.create({
-      type: 'LOW_STOCK',
-      title: 'Stock Bajo',
-      message: `Producto con stock bajo`,
-      isRead: false,
-      priority: 'HIGH',
-      relatedId: productId,
-    });
-  }
-
-  async createExpiringNotification(productId: string): Promise<Notification> {
-    return this.create({
-      type: 'EXPIRING',
-      title: 'Producto por Vencer',
-      message: `Producto próximo a vencer`,
-      isRead: false,
-      priority: 'MEDIUM',
-      relatedId: productId,
-    });
-  }
-}
-
-class MockKPIService implements KPIService {
-  async getDashboardKPIs(salonId: string): Promise<KPIData> {
-    const salonProducts = mockProducts.filter(p => p.salonId === salonId);
-    const salonServices = mockServices.filter(s => s.salonId === salonId);
-    
-    const lowStockItems = salonProducts.filter(p => p.stock <= p.minStock).length;
-    const expiringItems = salonProducts.filter(p => 
-      differenceInDays(p.expirationDate, new Date()) <= 30
-    ).length;
-
-    return {
-      totalProducts: salonProducts.length,
-      lowStockItems,
-      expiringItems,
-      totalServices: salonServices.length,
-      totalSuppliers: mockSuppliers.filter(s => s.salonId === salonId).length,
-      monthlyExpenses: 8500,
-      monthlyRevenue: 15000,
-      profitMargin: ((15000 - 8500) / 15000) * 100,
-    };
-  }
-
-  async getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number> {
-    // Mock data - en realidad vendría de la base de datos
-    return 15000;
-  }
-
-  async getMonthlyExpenses(salonId: string, month: number, year: number): Promise<number> {
-    // Mock data - en realidad vendría de la base de datos
-    return 8500;
-  }
-
-  async getProfitMargin(salonId: string, month: number, year: number): Promise<number> {
-    const revenue = await this.getMonthlyRevenue(salonId, month, year);
-    const expenses = await this.getMonthlyExpenses(salonId, month, year);
-    return ((revenue - expenses) / revenue) * 100;
-  }
-}
-
-class MockSalonConfigService implements SalonConfigService {
-  private salonConfigs: SalonConfig[] = [
-    {
-      id: 'salon1',
-      name: 'Belleza Élite',
-      address: 'Calle Principal 123, Madrid',
-      phone: '+34 912 345 678',
-      email: 'info@bellezaelite.com',
-      timezone: 'Europe/Madrid',
-      currency: 'EUR',
-      taxRate: 21,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 'salon2',
-      name: 'Glamour Studio',
-      address: 'Avenida Belleza 456, Barcelona',
-      phone: '+34 987 654 321',
-      email: 'info@glamourstudio.com',
-      timezone: 'Europe/Madrid',
-      currency: 'EUR',
-      taxRate: 21,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: 'salon3',
-      name: 'Spa Serenity',
-      address: 'Plaza Wellness 789, Valencia',
-      phone: '+34 654 321 987',
-      email: 'info@spaserenity.com',
-      timezone: 'Europe/Madrid',
-      currency: 'EUR',
-      taxRate: 21,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
-
-  async getAll(salonId: string): Promise<SalonConfig[]> {
-    return this.salonConfigs.filter(s => s.id === salonId);
-  }
-
-  async getById(id: string): Promise<SalonConfig | null> {
-    return this.salonConfigs.find(s => s.id === id) || null;
-  }
-
-  async create(data: Omit<SalonConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<SalonConfig> {
-    const newConfig: SalonConfig = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.salonConfigs.push(newConfig);
-    return newConfig;
-  }
-
-  async update(id: string, data: Partial<SalonConfig>): Promise<SalonConfig> {
-    const index = this.salonConfigs.findIndex(s => s.id === id);
-    if (index === -1) throw new Error('Salon config not found');
-    
-    this.salonConfigs[index] = {
-      ...this.salonConfigs[index],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return this.salonConfigs[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.salonConfigs.findIndex(s => s.id === id);
-    if (index === -1) return false;
-    
-    this.salonConfigs.splice(index, 1);
-    return true;
-  }
-
-  async getActiveSalons(): Promise<SalonConfig[]> {
-    return this.salonConfigs.filter(s => s.isActive);
-  }
-
-  async updateSettings(id: string, settings: Partial<SalonConfig>): Promise<SalonConfig> {
-    return this.update(id, settings);
-  }
-}
-
-class MockCategoryService implements CategoryService {
-  private categories: Category[] = [
-    // Categorías de productos
-    { id: '1', name: 'Cuidado Capilar', type: 'product', description: 'Productos para el cuidado del cabello', color: '#3B82F6', icon: 'scissors', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '2', name: 'Coloración', type: 'product', description: 'Productos para coloración', color: '#EC4899', icon: 'palette', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '3', name: 'Tratamientos', type: 'product', description: 'Tratamientos especializados', color: '#10B981', icon: 'sparkles', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '4', name: 'Manicura', type: 'product', description: 'Productos para uñas', color: '#F59E0B', icon: 'hand', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '5', name: 'Cuidado Facial', type: 'product', description: 'Productos para el rostro', color: '#8B5CF6', icon: 'face', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    
-    // Categorías de servicios
-    { id: '6', name: 'Cabello', type: 'service', description: 'Servicios de cabello', color: '#3B82F6', icon: 'scissors', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '7', name: 'Uñas', type: 'service', description: 'Servicios de uñas', color: '#F59E0B', icon: 'hand', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '8', name: 'Facial', type: 'service', description: 'Servicios faciales', color: '#8B5CF6', icon: 'face', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-  ];
-
-  async getAll(salonId: string): Promise<Category[]> {
-    return this.categories.filter(c => !c.salonId || c.salonId === salonId);
-  }
-
-  async getById(id: string): Promise<Category | null> {
-    return this.categories.find(c => c.id === id) || null;
-  }
-
-  async create(data: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<Category> {
-    const newCategory: Category = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.categories.push(newCategory);
-    return newCategory;
-  }
-
-  async update(id: string, data: Partial<Category>): Promise<Category> {
-    const index = this.categories.findIndex(c => c.id === id);
-    if (index === -1) throw new Error('Category not found');
-    
-    this.categories[index] = {
-      ...this.categories[index],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return this.categories[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.categories.findIndex(c => c.id === id);
-    if (index === -1) return false;
-    
-    this.categories.splice(index, 1);
-    return true;
-  }
-
-  async getByType(type: 'product' | 'service', salonId?: string): Promise<Category[]> {
-    return this.categories.filter(c => c.type === type && (!salonId || !c.salonId || c.salonId === salonId));
-  }
-
-  async getGlobalCategories(): Promise<Category[]> {
-    return this.categories.filter(c => !c.salonId);
-  }
-}
-
-class MockUnitService implements UnitService {
-  private units: Unit[] = [
-    { id: '1', name: 'Mililitros', symbol: 'ml', description: 'Unidad de volumen', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '2', name: 'Gramos', symbol: 'g', description: 'Unidad de peso', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '3', name: 'Unidades', symbol: 'un', description: 'Unidad individual', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '4', name: 'Tubos', symbol: 'tubo', description: 'Tubos de producto', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-    { id: '5', name: 'Piezas', symbol: 'pza', description: 'Piezas individuales', isActive: true, createdAt: new Date(), updatedAt: new Date() },
-  ];
-
-  async getAll(salonId: string): Promise<Unit[]> {
-    return this.units;
-  }
-
-  async getById(id: string): Promise<Unit | null> {
-    return this.units.find(u => u.id === id) || null;
-  }
-
-  async create(data: Omit<Unit, 'id' | 'createdAt' | 'updatedAt'>): Promise<Unit> {
-    const newUnit: Unit = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.units.push(newUnit);
-    return newUnit;
-  }
-
-  async update(id: string, data: Partial<Unit>): Promise<Unit> {
-    const index = this.units.findIndex(u => u.id === id);
-    if (index === -1) throw new Error('Unit not found');
-    
-    this.units[index] = {
-      ...this.units[index],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return this.units[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.units.findIndex(u => u.id === id);
-    if (index === -1) return false;
-    
-    this.units.splice(index, 1);
-    return true;
-  }
-
-  async getActiveUnits(): Promise<Unit[]> {
-    return this.units.filter(u => u.isActive);
-  }
-}
-
-class MockUserRoleService implements UserRoleService {
-  private roles: UserRole[] = [
-    {
-      id: '1',
-      name: 'Administrador',
-      code: 'admin',
-      description: 'Acceso completo al sistema',
-      permissions: ['*'],
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '2',
-      name: 'Gerente',
-      code: 'manager',
-      description: 'Gestión de operaciones diarias',
-      permissions: ['products:read', 'products:write', 'services:read', 'services:write', 'suppliers:read', 'suppliers:write', 'reports:read'],
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '3',
-      name: 'Empleado',
-      code: 'employee',
-      description: 'Operaciones básicas',
-      permissions: ['products:read', 'services:read', 'inventory:read'],
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
-
-  async getAll(salonId: string): Promise<UserRole[]> {
-    return this.roles;
-  }
-
-  async getById(id: string): Promise<UserRole | null> {
-    return this.roles.find(r => r.id === id) || null;
-  }
-
-  async create(data: Omit<UserRole, 'id' | 'createdAt' | 'updatedAt'>): Promise<UserRole> {
-    const newRole: UserRole = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.roles.push(newRole);
-    return newRole;
-  }
-
-  async update(id: string, data: Partial<UserRole>): Promise<UserRole> {
-    const index = this.roles.findIndex(r => r.id === id);
-    if (index === -1) throw new Error('Role not found');
-    
-    this.roles[index] = {
-      ...this.roles[index],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return this.roles[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.roles.findIndex(r => r.id === id);
-    if (index === -1) return false;
-    
-    this.roles.splice(index, 1);
-    return true;
-  }
-
-  async getActiveRoles(): Promise<UserRole[]> {
-    return this.roles.filter(r => r.isActive);
-  }
-
-  async getByCode(code: string): Promise<UserRole | null> {
-    return this.roles.find(r => r.code === code) || null;
-  }
-}
-
-class MockAppConfigService implements AppConfigService {
-  private configs: AppConfig[] = [
-    {
-      id: '1',
-      key: 'app_name',
-      value: 'Glam Stock',
-      type: 'string',
-      description: 'Nombre de la aplicación',
-      isPublic: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '2',
-      key: 'default_currency',
-      value: 'EUR',
-      type: 'string',
-      description: 'Moneda por defecto',
-      isPublic: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '3',
-      key: 'default_tax_rate',
-      value: '21',
-      type: 'number',
-      description: 'Tasa de impuesto por defecto',
-      isPublic: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      id: '4',
-      key: 'maintenance_mode',
-      value: 'false',
-      type: 'boolean',
-      description: 'Modo mantenimiento',
-      isPublic: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
-
-  async getAll(salonId: string): Promise<AppConfig[]> {
-    return this.configs;
-  }
-
-  async getById(id: string): Promise<AppConfig | null> {
-    return this.configs.find(c => c.id === id) || null;
-  }
-
-  async create(data: Omit<AppConfig, 'id' | 'createdAt' | 'updatedAt'>): Promise<AppConfig> {
-    const newConfig: AppConfig = {
-      ...data,
-      id: Date.now().toString(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.configs.push(newConfig);
-    return newConfig;
-  }
-
-  async update(id: string, data: Partial<AppConfig>): Promise<AppConfig> {
-    const index = this.configs.findIndex(c => c.id === id);
-    if (index === -1) throw new Error('Config not found');
-    
-    this.configs[index] = {
-      ...this.configs[index],
-      ...data,
-      updatedAt: new Date(),
-    };
-    return this.configs[index];
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const index = this.configs.findIndex(c => c.id === id);
-    if (index === -1) return false;
-    
-    this.configs.splice(index, 1);
-    return true;
-  }
-
-  async getByKey(key: string): Promise<AppConfig | null> {
-    return this.configs.find(c => c.key === key) || null;
-  }
-
-  async getPublicConfigs(): Promise<AppConfig[]> {
-    return this.configs.filter(c => c.isPublic);
-  }
-
-  async setConfig(key: string, value: string, type: string = 'string'): Promise<AppConfig> {
-    const existing = await this.getByKey(key);
-    if (existing) {
-      return this.update(existing.id, { value, type: type as any });
+    if (existingProductIndex >= 0) {
+      // Update existing product
+      const updatedProducts = [...serviceProducts];
+      updatedProducts[existingProductIndex] = newServiceProduct;
+      setServiceProducts(updatedProducts);
     } else {
-      return this.create({
-        key,
-        value,
-        type: type as any,
-        description: `Configuración automática para ${key}`,
-        isPublic: false,
-      });
+      // Add new product
+      setServiceProducts([...serviceProducts, newServiceProduct]);
     }
-  }
+
+    // Reset selection
+    setSelectedProductId('');
+    setProductQuantity(0);
+  };
+
+  const removeProductFromService = (productId: string) => {
+    setServiceProducts(serviceProducts.filter(sp => sp.productId !== productId));
+  };
+
+  const getProductName = (productId: string) => {
+    const product = salonProducts.find(p => p.id === productId);
+    return product?.name || 'Producto no encontrado';
+  };
+
+  const getProductUnit = (productId: string) => {
+    const product = salonProducts.find(p => p.id === productId);
+    return product?.unit || '';
+  };
+
+  const totalProductsCost = serviceProducts.reduce((total, product) => total + product.cost, 0);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateAllFields()) {
+      return;
+    }
+    
+    const serviceData: Service = {
+      id: service?.id || Date.now().toString(),
+      salonId: state.currentUser?.salonId || '',
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      price: formData.price,
+      duration: formData.duration,
+      category: formData.category.trim(),
+      products: serviceProducts,
+      isActive: true,
+      createdAt: service?.createdAt || new Date(),
+      updatedAt: new Date(),
+    };
+
+    if (service) {
+      dispatch({ type: 'UPDATE_SERVICE', payload: serviceData });
+    } else {
+      dispatch({ type: 'ADD_SERVICE', payload: serviceData });
+    }
+
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-xl font-bold mb-4">
+            {service ? 'Editar Servicio' : 'Nuevo Servicio'}
+          </h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Basic Service Information */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => handleFieldChange('name', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.name ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Ej: Corte y Peinado"
+                  />
+                  {errors.name && (
+                    <p className="text-red-600 text-xs mt-1">{errors.name}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción *</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => handleFieldChange('description', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.description ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Ej: Corte personalizado con peinado profesional"
+                  />
+                  {errors.description && (
+                    <p className="text-red-600 text-xs mt-1">{errors.description}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio ($) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="0.01"
+                     value={formData.price === 0 ? '' : formData.price}
+                      onChange={(e) => handleFieldChange('price', Number(e.target.value))}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                        errors.price ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.price && (
+                      <p className="text-red-600 text-xs mt-1">{errors.price}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Duración (min) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                     value={formData.duration === 0 ? '' : formData.duration}
+                      onChange={(e) => handleFieldChange('duration', Number(e.target.value))}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                        errors.duration ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                    />
+                    {errors.duration && (
+                      <p className="text-red-600 text-xs mt-1">{errors.duration}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tarifa/Hora (€) *</label>
+                    <input
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tarifa/Hora (€) *</label>
+                      required
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      step="0.01"
+                      value={formData.laborRate === 0 ? '' : formData.laborRate}
+                      onChange={(e) => handleFieldChange('laborRate', Number(e.target.value))}
+                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                        errors.laborRate ? 'border-red-300' : 'border-gray-300'
+                      }`}
+                      placeholder={`Por defecto: €${DEFAULT_LABOR_RATE_PER_HOUR}`}
+                    />
+                      <p className="text-red-600 text-xs mt-1">{errors.category}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Inventory Products Section */}
+              <div className="space-y-4">
+                <div className="border border-gray-200 rounded-lg p-4">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                    <Package className="w-5 h-5 mr-2" />
+                    Insumos de Inventario
+                  </h3>
+
+                  {/* Add Product Form */}
+                  <div className="space-y-3 mb-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+                      <select
+                        value={selectedProductId}
+                        onChange={(e) => setSelectedProductId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      >
+                        <option value="">Seleccionar producto</option>
+                        {availableProducts.map(product => (
+                          <option key={product.id} value={product.id}>
+                            {product.name} - {product.brand} (Stock: {product.stock} {product.unit})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                       value={productQuantity === 0 ? '' : productQuantity}
+                        onChange={(e) => setProductQuantity(Number(e.target.value))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        placeholder="Cantidad a usar"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={addProductToService}
+                      disabled={!selectedProductId || productQuantity <= 0}
+                      className="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Agregar Insumo
+                    </button>
+                  </div>
+
+                  {/* Selected Products List */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700">Productos seleccionados:</h4>
+                    {serviceProducts.length === 0 ? (
+                      <p className="text-sm text-gray-500 italic">No hay productos seleccionados</p>
+                    ) : (
+                      <div className="max-h-40 overflow-y-auto space-y-2">
+                        {serviceProducts.map((serviceProduct, index) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-gray-900">
+                                {getProductName(serviceProduct.productId)}
+                              </p>
+                              <p className="text-xs text-gray-600">
+                                Cantidad: {serviceProduct.quantity} {getProductUnit(serviceProduct.productId)} - 
+                                Costo: ${serviceProduct.cost.toFixed(2)}
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeProductFromService(serviceProduct.productId)}
+                              className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    {serviceProducts.length > 0 && (
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-sm font-medium text-gray-900">
+                          Costo total de insumos: <span className="text-red-600">${totalProductsCost.toFixed(2)}</span>
+                        </p>
+                        {formData.price > 0 && (
+                          <p className="text-sm text-gray-600">
+                            Margen de ganancia: <span className={`font-medium ${
+                              ((formData.price - totalProductsCost) / formData.price * 100) >= 50 ? 'text-green-600' : 
+                              ((formData.price - totalProductsCost) / formData.price * 100) >= 30 ? 'text-orange-600' : 'text-red-600'
+                            }`}>
+                              {((formData.price - totalProductsCost) / formData.price * 100).toFixed(1)}%
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex space-x-4 pt-4 border-t border-gray-200">
+              <button
+                type="submit"
+                disabled={Object.keys(errors).length > 0}
+                className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-2 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
+              >
+                {service ? 'Actualizar' : 'Crear'}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-// ===== PROVEEDOR PRINCIPAL =====
+function ServiceDetailModal({ service, onClose }: { service: Service; onClose: () => void }) {
+  const { state } = useApp();
+  
+  const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
+  
+  const getProductName = (productId: string) => {
+    const product = salonProducts.find(p => p.id === productId);
+    return product?.name || 'Producto no encontrado';
+  };
 
-export class MockDataProvider implements DataProvider {
-  products: ProductService = new MockProductService();
-  services: ServiceService = new MockServiceService();
-  suppliers: SupplierService = new MockSupplierService();
-  users: UserService = new MockUserService();
-  movements: MovementService = new MockMovementService();
-  notifications: NotificationService = new MockNotificationService();
-  kpis: KPIService = new MockKPIService();
-  salonConfig: SalonConfigService = new MockSalonConfigService();
-  categories: CategoryService = new MockCategoryService();
-  units: UnitService = new MockUnitService();
-  userRoles: UserRoleService = new MockUserRoleService();
-  appConfig: AppConfigService = new MockAppConfigService();
+  const getProductUnit = (productId: string) => {
+    const product = salonProducts.find(p => p.id === productId);
+    return product?.unit || '';
+  };
+
+  const totalCost = service.products.reduce((total, product) => total + product.cost, 0);
+  const profit = service.price - totalCost;
+  const profitMargin = (profit / service.price * 100);
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-xl font-bold mb-4">{service.name}</h2>
+          
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium text-gray-900 mb-2">Descripción</h3>
+              <p className="text-gray-600">{service.description}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-medium text-gray-900">Precio</h4>
+                <p className="text-lg font-bold text-green-600">${service.price.toFixed(2)}</p>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900">Duración</h4>
+                <p className="text-lg font-semibold">{service.duration} min</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-medium text-gray-900 mb-2">Productos Utilizados</h3>
+              {service.products.length > 0 ? (
+                <div className="space-y-2">
+                  {service.products.map((product, index) => (
+                    <div key={index} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                      <span className="text-sm">{getProductName(product.productId)}</span>
+                      <div className="text-right">
+                        <div className="text-sm">Cantidad: {product.quantity} {getProductUnit(product.productId)}</div>
+                        <div className="text-sm font-medium">${product.cost.toFixed(2)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-sm">No hay productos asociados</p>
+              )}
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Costo de insumos:</span>
+                    <span className="font-medium text-orange-600">${productsCost.toFixed(2)}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Costo mano de obra:</span>
+                    <span className="font-medium text-blue-600">${laborCost.toFixed(2)}</span>
+                  </div>
+                </div>
+                <div className="border-t pt-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Costo total:</span>
+                    <span className="font-bold text-red-600">${totalCost.toFixed(2)}</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Ganancia:</span>
+                    <span className="font-bold text-green-600">${profit.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3 pt-2 border-t">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Margen de ganancia:</span>
+                  <span className={`font-bold text-lg ${profitMargin >= 50 ? 'text-green-600' : profitMargin >= 30 ? 'text-orange-600' : 'text-red-600'}`}>
+                    {profitMargin.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  Tarifa: €{laborRate}/hora • Duración: {service.duration} min
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="w-full mt-6 bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
-
-// Instancia singleton
-export const mockDataProvider = new MockDataProvider(); 
