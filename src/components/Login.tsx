@@ -176,6 +176,14 @@ export function Login() {
             >
               {showAccounts ? 'Ocultar' : 'Ver'} cuentas de demostración
             </button>
+            <div className="mt-4">
+              <button
+                onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'register' })}
+                className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors"
+              >
+                ¿No tienes cuenta? Regístrate
+              </button>
+            </div>
           </footer>
         </section>
 

@@ -6,6 +6,7 @@ import { Inventory } from './components/Inventory';
 import { Services } from './components/Services';
 import { Suppliers } from './components/Suppliers';
 import { Login } from './components/Login';
+import { Register } from './components/Register';
 import { LandingPage } from './components/LandingPage';
 import { mockProducts, mockServices, mockSuppliers, mockUsers } from './utils/mockData';
 
@@ -24,6 +25,9 @@ function AppContent() {
   if (!state.currentUser) {
     if (state.currentView === 'login') {
       return <Login />;
+    }
+    if (state.currentView === 'register') {
+      return <Register />;
     }
     return <LandingPage />;
   }

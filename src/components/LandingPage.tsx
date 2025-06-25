@@ -131,10 +131,10 @@ export function LandingPage() {
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </button>
               <button
-                onClick={handleGetStarted}
+                onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'register' })}
                 className="inline-flex items-center px-8 py-4 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-200 text-lg font-semibold"
               >
-                Ver Demo
+                Crear Cuenta
                 <Sparkles className="w-5 h-5 ml-2" aria-hidden="true" />
               </button>
             </div>
