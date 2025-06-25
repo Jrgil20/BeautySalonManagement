@@ -470,7 +470,7 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
                       required
                       min="0"
                       step="0.01"
-                      value={formData.price}
+                     value={formData.price === 0 ? '' : formData.price}
                       onChange={(e) => handleFieldChange('price', Number(e.target.value))}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                         errors.price ? 'border-red-300' : 'border-gray-300'
@@ -486,7 +486,7 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
                       type="number"
                       required
                       min="0"
-                      value={formData.duration}
+                     value={formData.duration === 0 ? '' : formData.duration}
                       onChange={(e) => handleFieldChange('duration', Number(e.target.value))}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                         errors.duration ? 'border-red-300' : 'border-gray-300'
@@ -547,7 +547,7 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
                         type="number"
                         min="0"
                         step="0.01"
-                        value={productQuantity}
+                       value={productQuantity === 0 ? '' : productQuantity}
                         onChange={(e) => setProductQuantity(Number(e.target.value))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder="Cantidad a usar"

@@ -491,7 +491,7 @@ function ProductForm({ product, onClose, salonSuppliers }: { product: Product | 
                     type="number"
                     required
                     min="0"
-                    value={formData.stock}
+                   value={formData.stock === 0 ? '' : formData.stock}
                     onChange={(e) => handleFieldChange('stock', Number(e.target.value))}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                       errors.stock ? 'border-red-300' : 'border-gray-300'
@@ -507,7 +507,7 @@ function ProductForm({ product, onClose, salonSuppliers }: { product: Product | 
                     type="number"
                     required
                     min="0"
-                    value={formData.minStock}
+                   value={formData.minStock === 0 ? '' : formData.minStock}
                     onChange={(e) => handleFieldChange('minStock', Number(e.target.value))}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                       errors.minStock ? 'border-red-300' : 'border-gray-300'
@@ -543,7 +543,7 @@ function ProductForm({ product, onClose, salonSuppliers }: { product: Product | 
                     required
                     min="0"
                     step="0.01"
-                    value={formData.unitPrice}
+                   value={formData.unitPrice === 0 ? '' : formData.unitPrice}
                     onChange={(e) => handleFieldChange('unitPrice', Number(e.target.value))}
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                       errors.unitPrice ? 'border-red-300' : 'border-gray-300'
