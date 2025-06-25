@@ -26,6 +26,7 @@ export function Services() {
   const [showForm, setShowForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [viewingService, setViewingService] = useState<Service | null>(null);
+  const [defaultLaborRate, setDefaultLaborRate] = useState(DEFAULT_LABOR_RATE_PER_HOUR);
 
   const categories = [...new Set(salonServices.map(s => s.category))];
   
@@ -162,18 +163,34 @@ export function Services() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Servicios</h1>
-        <button
-          onClick={() => {
-            setEditingService(null);
-            setShowForm(true);
-          }}
-          className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-        >
-          <Plus className="w-5 h-5 mr-2" />
-          Agregar Servicio
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+              Tarifa estándar (€/hora):
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={defaultLaborRate}
+              onChange={(e) => setDefaultLaborRate(Number(e.target.value))}
+              className="w-24 px-2 py-1 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              placeholder="25.00"
+            />
+          </div>
+          <button
+            onClick={() => {
+              setEditingService(null);
+              setShowForm(true);
+            }}
+            className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Agregar Servicio
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -228,6 +245,7 @@ export function Services() {
       {showForm && (
         <ServiceForm
           service={editingService}
+          defaultLaborRate={defaultLaborRate}
           onClose={() => {
             setShowForm(false);
             setEditingService(null);
@@ -246,7 +264,11 @@ export function Services() {
   );
 }
 
-function ServiceForm({ service, onClose }: { service: Service | null; onClose: () => void }) {
+function ServiceForm({ service, onClose, defaultLaborRate }: { 
+  service: Service | null; 
+  onClose: () => void;
+  defaultLaborRate: number;
+}) {
   const { state, dispatch } = useApp();
   const [formData, setFormData] = useState({
     name: service?.name || '',
@@ -254,7 +276,7 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
     price: service?.price || 0,
     duration: service?.duration || 0,
     category: service?.category || '',
-    laborRate: service?.laborRate || DEFAULT_LABOR_RATE_PER_HOUR,
+    laborRate: service?.laborRate || defaultLaborRate,
   });
 
   // State for managing inventory products
@@ -535,7 +557,10 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
                     )}
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tarifa/Hora (€) *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Tarifa/Hora (€) *
+                      <span className="text-xs text-gray-500 ml-1">(Estándar: €{defaultLaborRate})</span>
+                    </label>
                     <input
                       type="number"
                       required
@@ -546,12 +571,29 @@ function ServiceForm({ service, onClose }: { service: Service | null; onClose: (
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                         errors.laborRate ? 'border-red-300' : 'border-gray-300'
                       }`}
-                      placeholder={`Por defecto: €${DEFAULT_LABOR_RATE_PER_HOUR}`}
+                      placeholder={`Por defecto: €${defaultLaborRate}`}
                     />
-                    {errors.category && (
-                      <p className="text-red-600 text-xs mt-1">{errors.category}</p>
+                    {errors.laborRate && (
+                      <p className="text-red-600 text-xs mt-1">{errors.laborRate}</p>
                     )}
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.category}
+                    onChange={(e) => handleFieldChange('category', e.target.value)}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
+                      errors.category ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Ej: Cabello, Uñas, Facial"
+                  />
+                  {errors.category && (
+                    <p className="text-red-600 text-xs mt-1">{errors.category}</p>
+                  )}
                 </div>
               </div>
 
