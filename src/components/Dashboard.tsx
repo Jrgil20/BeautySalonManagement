@@ -61,14 +61,13 @@ export function Dashboard() {
 
   const COLORS = ['#ec4899', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
 
-  const StatCard = ({ title, value, icon: Icon, trend, color }: {
+  const StatCard = ({ title, value, icon: Icon, trend, color, onClick }: {
     title: string;
     value: number | string;
     icon: React.ElementType;
     trend?: 'up' | 'down';
     color: string;
-    onClick?: () => void;
-  }) => (
+  }, onClick?: () => void) => (
     <article 
       className={`bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 ${
         onClick ? 'cursor-pointer hover:scale-105 transform transition-transform' : ''
