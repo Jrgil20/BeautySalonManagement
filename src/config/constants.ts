@@ -1,5 +1,9 @@
 // ===== CONFIGURACIÓN DE LA APLICACIÓN =====
 
+// ===== CONFIGURACIÓN DE COSTOS DE MANO DE OBRA =====
+
+export const DEFAULT_LABOR_RATE_PER_HOUR = 25; // €25 por hora por defecto
+
 export const APP_CONFIG = {
   name: 'Glam Stock',
   version: '1.0.0',

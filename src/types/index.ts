@@ -22,6 +22,7 @@ export interface Service {
   duration: number; // in minutes
   category: string;
   products: ServiceProduct[];
+  laborRate?: number; // Tarifa por hora para mano de obra (opcional, usa default si no se especifica)
   isActive: boolean;
   salonId: string;
   createdAt: Date;
