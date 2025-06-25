@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { Product, Supplier } from '../types';
+import { Product, Supplier, InventoryFilterType } from '../types';
 import { 
   Plus, 
   Search, 
@@ -25,9 +25,38 @@ export function Inventory() {
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+  // Reset search and category filters when inventory filter changes from dashboard
+  useEffect(() => {
+    if (state.inventoryFilter) {
+      setSearchTerm('');
+      setSelectedCategory('');
+    }
+  }, [state.inventoryFilter]);
+
   const categories = [...new Set(salonProducts.map(p => p.category))];
   
-  const filteredProducts = salonProducts.filter(product => {
+  // Apply inventory filter first, then search and category filters
+  let baseProducts = salonProducts;
+  
+  // Apply inventory filter from dashboard
+  if (state.inventoryFilter) {
+    switch (state.inventoryFilter) {
+      case 'lowStock':
+        baseProducts = salonProducts.filter(p => p.stock <= p.minStock);
+        break;
+      case 'expiring':
+        baseProducts = salonProducts.filter(p => 
+          differenceInDays(p.expirationDate, new Date()) <= 30
+        );
+        break;
+      case 'all':
+      default:
+        baseProducts = salonProducts;
+        break;
+    }
+  }
+  
+  const filteredProducts = baseProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.brand.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || product.category === selectedCategory;
@@ -63,6 +92,37 @@ export function Inventory() {
     }
   };
 
+  // Clear inventory filter when user manually changes filters
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (state.inventoryFilter) {
+      dispatch({ type: 'SET_INVENTORY_FILTER', payload: null });
+    }
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    if (state.inventoryFilter) {
+      dispatch({ type: 'SET_INVENTORY_FILTER', payload: null });
+    }
+  };
+
+  // Get filter display text
+  const getFilterDisplayText = () => {
+    if (state.inventoryFilter) {
+      switch (state.inventoryFilter) {
+        case 'lowStock':
+          return 'Mostrando productos con stock bajo';
+        case 'expiring':
+          return 'Mostrando productos próximos a vencer';
+        case 'all':
+          return 'Mostrando todos los productos';
+        default:
+          return '';
+      }
+    }
+    return '';
+  };
   const ProductCard = ({ product }: { product: Product }) => {
     const stockStatus = getStockStatus(product);
     const expirationStatus = getExpirationStatus(product.expirationDate);
@@ -157,6 +217,11 @@ export function Inventory() {
       <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Inventario</h1>
         <button
+          {state.inventoryFilter && (
+            <p className="text-sm text-purple-600 mt-1 font-medium">
+              {getFilterDisplayText()}
+            </p>
+          )}
           onClick={() => {
             setEditingProduct(null);
             setShowForm(true);
@@ -171,6 +236,21 @@ export function Inventory() {
       {/* Filters */}
       <section className="bg-white rounded-lg shadow-md p-6" aria-labelledby="filters-heading">
         <h2 id="filters-heading" className="sr-only">Filtros de búsqueda</h2>
+        {state.inventoryFilter && (
+          <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-purple-700">
+                Filtro activo: {getFilterDisplayText()}
+              </span>
+              <button
+                onClick={() => dispatch({ type: 'SET_INVENTORY_FILTER', payload: null })}
+                className="text-sm text-purple-600 hover:text-purple-800 font-medium"
+              >
+                Limpiar filtro
+              </button>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
@@ -178,7 +258,7 @@ export function Inventory() {
               type="text"
               placeholder="Buscar productos..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
@@ -187,7 +267,7 @@ export function Inventory() {
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={(e) => handleCategoryChange(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
             >
               <option value="">Todas las categorías</option>
@@ -198,7 +278,7 @@ export function Inventory() {
           </div>
 
           <div className="flex items-center text-sm text-gray-600">
-            {filteredProducts.length} de {salonProducts.length} productos
+            {filteredProducts.length} de {baseProducts.length} productos
           </div>
         </div>
       </section>

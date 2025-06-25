@@ -118,21 +118,30 @@ export function Dashboard() {
           icon={Package}
           trend="up"
           color="bg-gradient-to-r from-blue-500 to-blue-600"
-          onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' })}
+          onClick={() => {
+            dispatch({ type: 'SET_INVENTORY_FILTER', payload: 'all' });
+            dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' });
+          }}
         />
         <StatCard
           title="Stock Bajo"
           value={lowStockItems}
           icon={AlertTriangle}
           color="bg-gradient-to-r from-orange-500 to-orange-600"
-          onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' })}
+          onClick={() => {
+            dispatch({ type: 'SET_INVENTORY_FILTER', payload: 'lowStock' });
+            dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' });
+          }}
         />
         <StatCard
           title="Por Vencer"
           value={expiringItems}
           icon={Calendar}
           color="bg-gradient-to-r from-red-500 to-red-600"
-          onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' })}
+          onClick={() => {
+            dispatch({ type: 'SET_INVENTORY_FILTER', payload: 'expiring' });
+            dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' });
+          }}
         />
         <StatCard
           title="Servicios Activos"

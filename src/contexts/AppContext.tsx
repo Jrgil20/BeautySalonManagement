@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Product, Service, Supplier, InventoryMovement, Notification, KPIData, User } from '../types';
+import { Product, Service, Supplier, InventoryMovement, Notification, KPIData, User, InventoryFilterType } from '../types';
 
 interface AppState {
   products: Product[];
@@ -11,6 +11,7 @@ interface AppState {
   kpis: KPIData;
   currentView: string;
   currentUser: User | null;
+  inventoryFilter: InventoryFilterType | null;
 }
 
 type AppAction =
@@ -34,7 +35,8 @@ type AppAction =
   | { type: 'ADD_NOTIFICATION'; payload: Notification }
   | { type: 'MARK_NOTIFICATION_READ'; payload: string }
   | { type: 'UPDATE_KPIS'; payload: Partial<KPIData> }
-  | { type: 'SET_CURRENT_VIEW'; payload: string };
+  | { type: 'SET_CURRENT_VIEW'; payload: string }
+  | { type: 'SET_INVENTORY_FILTER'; payload: InventoryFilterType | null };
 
 const initialState: AppState = {
   products: [],
@@ -55,6 +57,7 @@ const initialState: AppState = {
   },
   currentView: 'landing',
   currentUser: null,
+  inventoryFilter: null,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -124,6 +127,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, kpis: { ...state.kpis, ...action.payload } };
     case 'SET_CURRENT_VIEW':
       return { ...state, currentView: action.payload };
+    case 'SET_INVENTORY_FILTER':
+      return { ...state, inventoryFilter: action.payload };
     default:
       return state;
   }

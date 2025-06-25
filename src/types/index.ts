@@ -80,6 +80,8 @@ export interface KPIData {
   profitMargin: number;
 }
 
+export type InventoryFilterType = 'all' | 'lowStock' | 'expiring';
+
 export interface User {
   id: string;
   email: string;
