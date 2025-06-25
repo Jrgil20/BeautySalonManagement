@@ -14,7 +14,7 @@ import { format, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export function Dashboard() {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
 
   // Filter data by current user's salon
   const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
@@ -67,8 +67,14 @@ export function Dashboard() {
     icon: React.ElementType;
     trend?: 'up' | 'down';
     color: string;
+    onClick?: () => void;
   }) => (
-    <article className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
+    <article 
+      className={`bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-300 ${
+        onClick ? 'cursor-pointer hover:scale-105 transform transition-transform' : ''
+      }`}
+      onClick={onClick}
+    >
       <header className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
@@ -112,18 +118,21 @@ export function Dashboard() {
           icon={Package}
           trend="up"
           color="bg-gradient-to-r from-blue-500 to-blue-600"
+          onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' })}
         />
         <StatCard
           title="Stock Bajo"
           value={lowStockItems}
           icon={AlertTriangle}
           color="bg-gradient-to-r from-orange-500 to-orange-600"
+          onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' })}
         />
         <StatCard
           title="Por Vencer"
           value={expiringItems}
           icon={Calendar}
           color="bg-gradient-to-r from-red-500 to-red-600"
+          onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' })}
         />
         <StatCard
           title="Servicios Activos"
@@ -131,6 +140,7 @@ export function Dashboard() {
           icon={Scissors}
           trend="up"
           color="bg-gradient-to-r from-green-500 to-green-600"
+          onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'services' })}
         />
       </section>
 
