@@ -215,13 +215,15 @@ export function Inventory() {
     <div className="space-y-6">
       {/* Header */}
       <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Inventario</h1>
-        <button
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Inventario</h1>
           {state.inventoryFilter && (
             <p className="text-sm text-purple-600 mt-1 font-medium">
               {getFilterDisplayText()}
             </p>
           )}
+        </div>
+        <button
           onClick={() => {
             setEditingProduct(null);
             setShowForm(true);
