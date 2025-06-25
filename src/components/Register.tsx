@@ -50,157 +50,155 @@ export function Register() {
   ];
 
   // Validation functions
-  const validateField = (name: string, value: string) => {
-    const newErrors = { ...errors };
+  const validateField = (name: string, value: string): string | undefined => {
+    let errorMessage: string | undefined;
     
     switch (name) {
       case 'name':
         if (!value.trim()) {
-          newErrors.name = 'El nombre es obligatorio';
+          errorMessage = 'El nombre es obligatorio';
         } else if (value.trim().length < 2) {
-          newErrors.name = 'El nombre debe tener al menos 2 caracteres';
+          errorMessage = 'El nombre debe tener al menos 2 caracteres';
         } else if (value.trim().length > 50) {
-          newErrors.name = 'El nombre no puede exceder 50 caracteres';
-        } else {
-          delete newErrors.name;
+          errorMessage = 'El nombre no puede exceder 50 caracteres';
         }
         break;
 
       case 'email':
         if (!value.trim()) {
-          newErrors.email = 'El email es obligatorio';
+          errorMessage = 'El email es obligatorio';
         } else {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) {
-            newErrors.email = 'Por favor ingresa un email válido';
+            errorMessage = 'Por favor ingresa un email válido';
           } else if (state.users.some(u => u.email === value.toLowerCase())) {
-            newErrors.email = 'Este email ya está registrado';
-          } else {
-            delete newErrors.email;
+            errorMessage = 'Este email ya está registrado';
           }
         }
         break;
 
       case 'password':
         if (!value) {
-          newErrors.password = 'La contraseña es obligatoria';
+          errorMessage = 'La contraseña es obligatoria';
         } else if (value.length < 6) {
-          newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+          errorMessage = 'La contraseña debe tener al menos 6 caracteres';
         } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
-          newErrors.password = 'La contraseña debe contener al menos una mayúscula, una minúscula y un número';
-        } else {
-          delete newErrors.password;
+          errorMessage = 'La contraseña debe contener al menos una mayúscula, una minúscula y un número';
         }
         break;
 
       case 'confirmPassword':
         if (!value) {
-          newErrors.confirmPassword = 'Confirma tu contraseña';
+          errorMessage = 'Confirma tu contraseña';
         } else if (value !== formData.password) {
-          newErrors.confirmPassword = 'Las contraseñas no coinciden';
-        } else {
-          delete newErrors.confirmPassword;
+          errorMessage = 'Las contraseñas no coinciden';
         }
         break;
 
       case 'salonName':
         if (!value.trim()) {
-          newErrors.salonName = 'El nombre del salón es obligatorio';
+          errorMessage = 'El nombre del salón es obligatorio';
         } else if (value.trim().length < 2) {
-          newErrors.salonName = 'El nombre debe tener al menos 2 caracteres';
+          errorMessage = 'El nombre debe tener al menos 2 caracteres';
         } else if (value.trim().length > 100) {
-          newErrors.salonName = 'El nombre no puede exceder 100 caracteres';
-        } else {
-          delete newErrors.salonName;
+          errorMessage = 'El nombre no puede exceder 100 caracteres';
         }
         break;
 
       case 'salonType':
         if (!value) {
-          newErrors.salonType = 'Selecciona el tipo de salón';
-        } else {
-          delete newErrors.salonType;
+          errorMessage = 'Selecciona el tipo de salón';
         }
         break;
 
       case 'address':
         if (!value.trim()) {
-          newErrors.address = 'La dirección es obligatoria';
+          errorMessage = 'La dirección es obligatoria';
         } else if (value.trim().length < 10) {
-          newErrors.address = 'La dirección debe tener al menos 10 caracteres';
+          errorMessage = 'La dirección debe tener al menos 10 caracteres';
         } else if (value.trim().length > 200) {
-          newErrors.address = 'La dirección no puede exceder 200 caracteres';
-        } else {
-          delete newErrors.address;
+          errorMessage = 'La dirección no puede exceder 200 caracteres';
         }
         break;
 
       case 'phone':
         if (!value.trim()) {
-          newErrors.phone = 'El teléfono es obligatorio';
+          errorMessage = 'El teléfono es obligatorio';
         } else {
           const phoneRegex = /^[+]?[0-9\s\-()]{7,20}$/;
           if (!phoneRegex.test(value)) {
-            newErrors.phone = 'Por favor ingresa un teléfono válido';
-          } else {
-            delete newErrors.phone;
+            errorMessage = 'Por favor ingresa un teléfono válido';
           }
         }
         break;
 
       case 'salonEmail':
         if (!value.trim()) {
-          newErrors.salonEmail = 'El email del salón es obligatorio';
+          errorMessage = 'El email del salón es obligatorio';
         } else {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) {
-            newErrors.salonEmail = 'Por favor ingresa un email válido';
-          } else {
-            delete newErrors.salonEmail;
+            errorMessage = 'Por favor ingresa un email válido';
           }
         }
         break;
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return errorMessage;
   };
 
   const handleFieldChange = (name: string, value: string) => {
     setFormData({ ...formData, [name]: value });
-    validateField(name, value);
+    const errorMessage = validateField(name, value);
+    setErrors(prev => {
+      const newErrors = { ...prev };
+      if (errorMessage) {
+        newErrors[name] = errorMessage;
+      } else {
+        delete newErrors[name];
+      }
+      return newErrors;
+    });
   };
 
-  const validateStep1 = () => {
+  const checkStep1Validity = () => {
     const fields = ['name', 'email', 'password', 'confirmPassword'];
-    let isValid = true;
-    
-    fields.forEach(field => {
-      if (!validateField(field, formData[field as keyof typeof formData] as string)) {
-        isValid = false;
-      }
-    });
-    
-    return isValid;
+    return fields.every(field => 
+      !validateField(field, formData[field as keyof typeof formData] as string)
+    );
   };
 
-  const validateStep2 = () => {
+  const checkStep2Validity = () => {
     const fields = ['salonName', 'salonType', 'address', 'phone', 'salonEmail'];
+    return fields.every(field => 
+      !validateField(field, formData[field as keyof typeof formData] as string)
+    );
+  };
+
+  const runFullValidationAndSetErrors = (step: number) => {
+    const fields = step === 1 
+      ? ['name', 'email', 'password', 'confirmPassword']
+      : ['salonName', 'salonType', 'address', 'phone', 'salonEmail'];
+    
+    const newErrors: {[key: string]: string} = {};
     let isValid = true;
     
     fields.forEach(field => {
-      if (!validateField(field, formData[field as keyof typeof formData] as string)) {
+      const errorMessage = validateField(field, formData[field as keyof typeof formData] as string);
+      if (errorMessage) {
+        newErrors[field] = errorMessage;
         isValid = false;
       }
     });
     
+    setErrors(prev => ({ ...prev, ...newErrors }));
     return isValid;
   };
 
   const handleNextStep = () => {
-    if (step === 1 && validateStep1()) {
+    if (step === 1 && runFullValidationAndSetErrors(1)) {
       setStep(2);
-    } else if (step === 2 && validateStep2()) {
+    } else if (step === 2 && runFullValidationAndSetErrors(2)) {
       handleSubmit();
     }
   };
@@ -570,7 +568,7 @@ export function Register() {
             
             <button
               type="submit"
-              disabled={isSubmitting || (step === 1 ? !validateStep1() : !validateStep2())}
+              disabled={isSubmitting || (step === 1 ? !checkStep1Validity() : !checkStep2Validity())}
               className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none"
             >
               {isSubmitting ? (
