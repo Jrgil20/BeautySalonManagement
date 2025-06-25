@@ -365,38 +365,3 @@ export function Layout({ children }: LayoutProps) {
     </div>
   );
 }
-                className="relative flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label={`Notificaciones ${unreadCount > 0 ? `(${unreadCount} sin leer)` : ''}`}
-              >
-                <Bell className="w-5 h-5 text-gray-600" aria-hidden="true" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-              </button>
-              <div className="ml-4 flex items-center">
-                <span className="text-sm font-medium text-gray-700 mr-2">
-                  {state.currentUser?.name}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center justify-center w-10 h-10 rounded-lg hover:bg-gray-100 transition-colors"
-                  title="Cerrar Sesión"
-                  aria-label="Cerrar Sesión"
-                >
-                  <LogOut className="w-5 h-5 text-gray-600" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Page content */}
-        <main className="flex-1 p-6 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
-}
