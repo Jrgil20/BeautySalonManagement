@@ -149,12 +149,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: { message: 'Error al crear la cuenta de usuario' } };
       }
 
-      // Wait for the user to be confirmed before creating profile
-      if (!data.user.email_confirmed_at && !data.user.confirmed_at) {
-        // User needs to confirm email first
-        return {};
-      }
-
       // Create user profile in our database
       const salonId = `salon-${Date.now()}`;
       const { error: profileError } = await supabase
@@ -172,12 +166,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (profileError) {
         console.error('Error creating user profile:', profileError);
         
-        // Check if it's a policy violation (user might need to confirm email first)
-        if (profileError.code === '42501' || profileError.message.includes('policy')) {
-          return { error: { message: 'Por favor confirma tu email antes de completar el registro.' } };
-        }
-        
         return { error: { message: `Error al crear el perfil de usuario: ${profileError.message}` } };
+      }
+
+      // If email confirmation is required, inform the user but profile is already created
+      if (!data.user.email_confirmed_at && !data.user.confirmed_at) {
+        // Profile was created successfully, just need email confirmation for login
+        return {};
       }
 
       return {};
