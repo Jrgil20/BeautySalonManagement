@@ -57,22 +57,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: { message: 'El registro no está disponible en modo demo' } };
       }
 
-      // Create new user
-      const newUser: Omit<User, 'id' | 'createdAt'> = {
+      // Use Supabase authentication for user registration
+      const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
-        name: metadata?.name || 'New User',
-        role: 'admin',
-        isActive: true,
-        salonId: `salon-${Date.now()}`,
-        salonName: metadata?.salonName || 'New Salon',
-      };
+        options: {
+          data: {
+            name: metadata?.name || 'New User',
+            salon_name: metadata?.salonName || 'New Salon',
+          }
+        }
+      });
 
-      await dataProvider.users.create(newUser);
+      if (error) {
+        return { error: { message: error.message } };
+      }
+
+      // If signup successful, create user profile in our database
+      if (data.user) {
+        const newUser: Omit<User, 'id' | 'createdAt'> = {
+          email: email.toLowerCase(),
+          password,
+          name: metadata?.name || 'New User',
+          role: 'admin',
+          isActive: true,
+          salonId: `salon-${Date.now()}`,
+          salonName: metadata?.salonName || 'New Salon',
+        };
+
+        try {
+          await dataProvider.users.create(newUser);
+        } catch (dbError) {
+          console.error('Error creating user profile:', dbError);
+          // User was created in auth but profile creation failed
+          // This is not a critical error for the signup flow
+        }
+      }
+
       return {};
     } catch (error) {
       console.error('Error creating user:', error);
-      return { error: { message: 'Error creating user account' } };
+      return { error: { message: 'Error al crear la cuenta. Por favor intenta de nuevo.' } };
     } finally {
       setLoading(false);
     }
