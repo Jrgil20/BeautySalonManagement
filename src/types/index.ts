@@ -105,7 +105,7 @@ export interface User {
 export interface DataService<T> {
   getAll(salonId: string): Promise<T[]>;
   getById(id: string): Promise<T | null>;
-  create(data: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T>;
+  create(data: Omit<T, 'createdAt' | 'updatedAt'>): Promise<T>;
   update(id: string, data: Partial<T>): Promise<T>;
   delete(id: string): Promise<boolean>;
 }

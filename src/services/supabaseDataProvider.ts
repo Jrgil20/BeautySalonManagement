@@ -474,27 +474,12 @@ class SupabaseUserService implements UserService {
     return dbUserToUser(data);
   }
 
-  async create(data: Omit<User, 'id' | 'createdAt'>): Promise<User> {
-    // First create the auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: {
-          name: data.name,
-          salon_name: data.salonName,
-        }
-      }
-    });
-
-    if (authError) throw authError;
-    if (!authData.user) throw new Error('Failed to create auth user');
-
-    // Then create the user profile
+  async create(data: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {
+    // Create the user profile (auth user should already exist)
     const { data: result, error } = await supabase
       .from('users')
       .insert({
-        id: authData.user.id,
+        id: data.id,
         email: data.email,
         name: data.name,
         role: data.role,

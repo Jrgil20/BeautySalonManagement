@@ -75,7 +75,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // If signup successful, create user profile in our database
       if (data.user) {
-        const newUser: Omit<User, 'id' | 'createdAt'> = {
+        const newUser: Omit<User, 'createdAt'> = {
+          id: data.user.id,
           email: email.toLowerCase(),
           password,
           name: metadata?.name || 'New User',

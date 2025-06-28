@@ -225,9 +225,10 @@ class MockUserService implements UserService {
   }
 
   async create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+  async create(data: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {
     const user: User = {
       ...data,
-      id: Date.now().toString(),
+      id: data.id || Date.now().toString(),
       createdAt: new Date(),
     };
     this.users.push(user);
