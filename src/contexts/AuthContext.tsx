@@ -78,7 +78,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const newUser: Omit<User, 'createdAt'> = {
           id: data.user.id,
           email: email.toLowerCase(),
-          password,
           name: metadata?.name || 'New User',
           role: 'admin',
           isActive: true,
