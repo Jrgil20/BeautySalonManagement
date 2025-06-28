@@ -80,57 +80,78 @@ export function Services() {
     const profit = calculateProfitMargin(service);
     
     return (
-      <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-        <div className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
-              <p className="text-sm text-gray-600 mt-1 line-clamp-2">{service.description}</p>
-              <span className="inline-block px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full mt-2">
-                {service.category}
-              </span>
+      <article className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden h-full flex flex-col">
+        {/* Header Section - Fixed Height */}
+        <header className="p-6 pb-4 min-h-[120px] flex flex-col">
+          <div className="flex items-start justify-between mb-3">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2 leading-6 line-clamp-2 min-h-[3rem]">
+                {service.name}
+              </h3>
+              <p className="text-sm text-gray-600 line-clamp-2 min-h-[2.5rem] leading-5">
+                {service.description}
+              </p>
             </div>
-            <div className="flex space-x-2">
+            <nav className="flex space-x-1 ml-3 flex-shrink-0" aria-label="Acciones del servicio">
               <button
                 onClick={() => setViewingService(service)}
                 className="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                aria-label={`Ver detalles de ${service.name}`}
               >
-                <Eye className="w-4 h-4" />
+                <Eye className="w-4 h-4" aria-hidden="true" />
               </button>
               <button
                 onClick={() => handleEdit(service)}
                 className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                aria-label={`Editar ${service.name}`}
               >
-                <Edit className="w-4 h-4" />
+                <Edit className="w-4 h-4" aria-hidden="true" />
               </button>
               <button
                 onClick={() => handleDelete(service.id)}
                 className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                aria-label={`Eliminar ${service.name}`}
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" aria-hidden="true" />
               </button>
-            </div>
+            </nav>
           </div>
+          
+          {/* Category Badge - Fixed Position */}
+          <div className="mt-auto">
+            <span className="inline-block px-3 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
+              {service.category}
+            </span>
+          </div>
+        </header>
 
-          <div className="grid grid-cols-2 gap-4 mb-4">
+        {/* Duration and Price Section - Fixed Height */}
+        <section className="px-6 pb-4 min-h-[80px] flex items-center" aria-labelledby="service-details">
+          <h4 id="service-details" className="sr-only">Detalles del servicio</h4>
+          <div className="grid grid-cols-2 gap-6 w-full">
             <div className="flex items-center">
-              <Clock className="w-4 h-4 text-gray-400 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Duración</p>
-                <p className="font-semibold text-gray-900">{service.duration} min</p>
+              <Clock className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-xs text-gray-500 mb-1">Duración</p>
+                <p className="font-semibold text-gray-900 text-sm">{service.duration} min</p>
               </div>
             </div>
             <div className="flex items-center">
-              <DollarSign className="w-4 h-4 text-gray-400 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Precio</p>
-                <p className="font-semibold text-gray-900">${service.price.toFixed(2)}</p>
+              <DollarSign className="w-5 h-5 text-gray-400 mr-3 flex-shrink-0" aria-hidden="true" />
+              <div className="min-w-0">
+                <p className="text-xs text-gray-500 mb-1">Precio</p>
+                <p className="font-semibold text-gray-900 text-sm">${service.price.toFixed(2)}</p>
               </div>
             </div>
           </div>
+        </section>
 
+        {/* Cost Breakdown Section - Flexible Height */}
+        <section className="px-6 pb-6 flex-1 flex flex-col justify-end" aria-labelledby="cost-breakdown">
+          <h4 id="cost-breakdown" className="sr-only">Desglose de costos</h4>
           <div className="pt-4 border-t border-gray-100">
-            <div className="space-y-2">
+            <div className="space-y-3">
+              {/* Individual Cost Items */}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500">Insumos:</span>
                 <span className="text-xs font-medium text-orange-600">${productsCost.toFixed(2)}</span>
@@ -139,31 +160,40 @@ export function Services() {
                 <span className="text-xs text-gray-500">Mano de obra:</span>
                 <span className="text-xs font-medium text-blue-600">${laborCost.toFixed(2)}</span>
               </div>
-              <div className="flex items-center justify-between border-t pt-2">
-                <span className="text-sm text-gray-600">Costo total:</span>
-                <span className="text-sm font-medium text-red-600">${totalCost.toFixed(2)}</span>
+              
+              {/* Total Cost */}
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <span className="text-sm text-gray-600 font-medium">Costo total:</span>
+                <span className="text-sm font-semibold text-red-600">${totalCost.toFixed(2)}</span>
+              </div>
+              
+              {/* Profit and Margin */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Ganancia:</span>
+                  <span className="text-sm font-semibold text-green-600">${(service.price - totalCost).toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Margen:</span>
+                  <span className={`text-sm font-bold ${
+                    profit >= 50 ? 'text-green-600' : 
+                    profit >= 30 ? 'text-orange-600' : 'text-red-600'
+                  }`}>
+                    {profit.toFixed(1)}%
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-sm text-gray-600">Ganancia:</span>
-              <span className="text-sm font-medium text-green-600">${(service.price - totalCost).toFixed(2)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Margen:</span>
-              <span className={`text-sm font-bold ${profit >= 50 ? 'text-green-600' : profit >= 30 ? 'text-orange-600' : 'text-red-600'}`}>
-                {profit.toFixed(1)}%
-              </span>
-            </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </article>
     );
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <header className="flex items-center justify-between flex-wrap gap-4">
         <h1 className="text-3xl font-bold text-gray-900">Servicios</h1>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
@@ -187,17 +217,18 @@ export function Services() {
             }}
             className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
-            <Plus className="w-5 h-5 mr-2" />
+            <Plus className="w-5 h-5 mr-2" aria-hidden="true" />
             Agregar Servicio
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <section className="bg-white rounded-lg shadow-md p-6" aria-labelledby="filters-heading">
+        <h2 id="filters-heading" className="sr-only">Filtros de búsqueda</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
             <input
               type="text"
               placeholder="Buscar servicios..."
@@ -224,21 +255,22 @@ export function Services() {
             {filteredServices.length} de {salonServices.filter(s => s.isActive).length} servicios
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Services Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-labelledby="services-heading">
+        <h2 id="services-heading" className="sr-only">Lista de servicios</h2>
         {filteredServices.map(service => (
           <ServiceCard key={service.id} service={service} />
         ))}
-      </div>
+      </section>
 
       {filteredServices.length === 0 && (
-        <div className="text-center py-12">
-          <Scissors className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron servicios</h3>
+        <section className="text-center py-12" aria-labelledby="empty-state-heading">
+          <Scissors className="w-16 h-16 text-gray-300 mx-auto mb-4" aria-hidden="true" />
+          <h3 id="empty-state-heading" className="text-lg font-medium text-gray-900 mb-2">No se encontraron servicios</h3>
           <p className="text-gray-600">Intenta ajustar los filtros o agregar nuevos servicios.</p>
-        </div>
+        </section>
       )}
 
       {/* Service Form Modal */}
@@ -462,6 +494,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
       duration: formData.duration,
       category: formData.category.trim(),
       products: serviceProducts,
+      laborRate: formData.laborRate,
       isActive: true,
       createdAt: service?.createdAt || new Date(),
       updatedAt: new Date(),
@@ -477,10 +510,10 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="form-title">
       <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">
+          <h2 id="form-title" className="text-xl font-bold mb-4">
             {service ? 'Editar Servicio' : 'Nuevo Servicio'}
           </h2>
           
@@ -501,7 +534,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
                     placeholder="Ej: Corte y Peinado"
                   />
                   {errors.name && (
-                    <p className="text-red-600 text-xs mt-1">{errors.name}</p>
+                    <p className="text-red-600 text-xs mt-1" role="alert">{errors.name}</p>
                   )}
                 </div>
 
@@ -518,7 +551,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
                     placeholder="Ej: Corte personalizado con peinado profesional"
                   />
                   {errors.description && (
-                    <p className="text-red-600 text-xs mt-1">{errors.description}</p>
+                    <p className="text-red-600 text-xs mt-1" role="alert">{errors.description}</p>
                   )}
                 </div>
 
@@ -530,14 +563,14 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
                       required
                       min="0"
                       step="0.01"
-                     value={formData.price === 0 ? '' : formData.price}
+                      value={formData.price === 0 ? '' : formData.price}
                       onChange={(e) => handleFieldChange('price', Number(e.target.value))}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                         errors.price ? 'border-red-300' : 'border-gray-300'
                       }`}
                     />
                     {errors.price && (
-                      <p className="text-red-600 text-xs mt-1">{errors.price}</p>
+                      <p className="text-red-600 text-xs mt-1" role="alert">{errors.price}</p>
                     )}
                   </div>
                   <div>
@@ -546,14 +579,14 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
                       type="number"
                       required
                       min="0"
-                     value={formData.duration === 0 ? '' : formData.duration}
+                      value={formData.duration === 0 ? '' : formData.duration}
                       onChange={(e) => handleFieldChange('duration', Number(e.target.value))}
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                         errors.duration ? 'border-red-300' : 'border-gray-300'
                       }`}
                     />
                     {errors.duration && (
-                      <p className="text-red-600 text-xs mt-1">{errors.duration}</p>
+                      <p className="text-red-600 text-xs mt-1" role="alert">{errors.duration}</p>
                     )}
                   </div>
                   <div>
@@ -574,7 +607,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
                       placeholder={`Por defecto: €${defaultLaborRate}`}
                     />
                     {errors.laborRate && (
-                      <p className="text-red-600 text-xs mt-1">{errors.laborRate}</p>
+                      <p className="text-red-600 text-xs mt-1" role="alert">{errors.laborRate}</p>
                     )}
                   </div>
                 </div>
@@ -592,7 +625,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
                     placeholder="Ej: Cabello, Uñas, Facial"
                   />
                   {errors.category && (
-                    <p className="text-red-600 text-xs mt-1">{errors.category}</p>
+                    <p className="text-red-600 text-xs mt-1" role="alert">{errors.category}</p>
                   )}
                 </div>
               </div>
@@ -601,7 +634,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
               <div className="space-y-4">
                 <div className="border border-gray-200 rounded-lg p-4">
                   <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                    <Package className="w-5 h-5 mr-2" />
+                    <Package className="w-5 h-5 mr-2" aria-hidden="true" />
                     Insumos de Inventario
                   </h3>
 
@@ -629,7 +662,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
                         type="number"
                         min="0"
                         step="0.01"
-                       value={productQuantity === 0 ? '' : productQuantity}
+                        value={productQuantity === 0 ? '' : productQuantity}
                         onChange={(e) => setProductQuantity(Number(e.target.value))}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         placeholder="Cantidad a usar"
@@ -668,8 +701,9 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
                               type="button"
                               onClick={() => removeProductFromService(serviceProduct.productId)}
                               className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
+                              aria-label="Eliminar producto"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="w-4 h-4" aria-hidden="true" />
                             </button>
                           </div>
                         ))}
@@ -698,7 +732,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
               </div>
             </div>
 
-            <div className="flex space-x-4 pt-4 border-t border-gray-200">
+            <footer className="flex space-x-4 pt-4 border-t border-gray-200">
               <button
                 type="submit"
                 disabled={Object.keys(errors).length > 0}
@@ -713,7 +747,7 @@ function ServiceForm({ service, onClose, defaultLaborRate }: {
               >
                 Cancelar
               </button>
-            </div>
+            </footer>
           </form>
         </div>
       </div>
@@ -736,15 +770,18 @@ function ServiceDetailModal({ service, onClose }: { service: Service; onClose: (
     return product?.unit || '';
   };
 
-  const totalCost = service.products.reduce((total, product) => total + product.cost, 0);
+  const productsCost = service.products.reduce((total, product) => total + product.cost, 0);
+  const laborRate = service.laborRate || DEFAULT_LABOR_RATE_PER_HOUR;
+  const laborCost = (service.duration / 60) * laborRate;
+  const totalCost = productsCost + laborCost;
   const profit = service.price - totalCost;
   const profitMargin = (profit / service.price * 100);
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" role="dialog" aria-modal="true" aria-labelledby="detail-title">
       <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
-          <h2 className="text-xl font-bold mb-4">{service.name}</h2>
+          <h2 id="detail-title" className="text-xl font-bold mb-4">{service.name}</h2>
           
           <div className="space-y-4">
             <div>
