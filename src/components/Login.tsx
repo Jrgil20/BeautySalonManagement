@@ -177,12 +177,14 @@ export function Login() {
           </form>
 
           <footer className="mt-8 text-center">
-            <button
-              onClick={() => setShowAccounts(!showAccounts)}
-              className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors"
-            >
-              {showAccounts ? 'Ocultar' : 'Ver'} cuentas de demostración
-            </button>
+            {!state.hideDemoAccountsButton && (
+              <button
+                onClick={() => setShowAccounts(!showAccounts)}
+                className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors"
+              >
+                {showAccounts ? 'Ocultar' : 'Ver'} cuentas de demostración
+              </button>
+            )}
             <div className="mt-4">
               <button
                 onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'register' })}

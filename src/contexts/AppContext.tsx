@@ -13,6 +13,7 @@ interface AppState {
   currentUser: User | null;
   inventoryFilter: InventoryFilterType | null;
   showDemoAccountsOnLogin: boolean;
+  hideDemoAccountsButton: boolean;
 }
 
 type AppAction =
@@ -40,7 +41,8 @@ type AppAction =
   | { type: 'UPDATE_KPIS'; payload: Partial<KPIData> }
   | { type: 'SET_CURRENT_VIEW'; payload: string }
   | { type: 'SET_INVENTORY_FILTER'; payload: InventoryFilterType | null }
-  | { type: 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN'; payload: boolean };
+  | { type: 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN'; payload: boolean }
+  | { type: 'SET_HIDE_DEMO_ACCOUNTS_BUTTON'; payload: boolean };
 
 const initialState: AppState = {
   products: [],
@@ -63,6 +65,7 @@ const initialState: AppState = {
   currentUser: null,
   inventoryFilter: null,
   showDemoAccountsOnLogin: false,
+  hideDemoAccountsButton: false,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -136,6 +139,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, inventoryFilter: action.payload };
     case 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN':
       return { ...state, showDemoAccountsOnLogin: action.payload };
+    case 'SET_HIDE_DEMO_ACCOUNTS_BUTTON':
+      return { ...state, hideDemoAccountsButton: action.payload };
     default:
       return state;
   }

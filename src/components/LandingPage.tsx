@@ -142,6 +142,15 @@ export function LandingPage() {
                 <Sparkles className="w-5 h-5 ml-2" aria-hidden="true" />
               </button>
             </div>
+            
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'register' })}
+                className="text-purple-600 hover:text-purple-700 text-lg font-medium transition-colors"
+              >
+                ¿No tienes cuenta? Crear Cuenta
+              </button>
+            </div>
           </div>
         </div>
 
