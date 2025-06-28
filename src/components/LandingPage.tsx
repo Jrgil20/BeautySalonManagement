@@ -22,6 +22,10 @@ export function LandingPage() {
     dispatch({ type: 'SET_CURRENT_VIEW', payload: 'login' });
   };
 
+  const handleViewDemo = () => {
+    dispatch({ type: 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN', payload: true });
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'login' });
+  };
   const features = [
     {
       icon: Package,
@@ -131,10 +135,10 @@ export function LandingPage() {
                 <ArrowRight className="w-5 h-5 ml-2" aria-hidden="true" />
               </button>
               <button
-                onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'register' })}
+                onClick={handleViewDemo}
                 className="inline-flex items-center px-8 py-4 bg-white text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-200 text-lg font-semibold"
               >
-                Crear Cuenta
+                Ver Demo
                 <Sparkles className="w-5 h-5 ml-2" aria-hidden="true" />
               </button>
             </div>

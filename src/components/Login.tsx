@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { 
   LogIn, 
@@ -22,6 +22,13 @@ export function Login() {
   const [error, setError] = useState('');
   const [showAccounts, setShowAccounts] = useState(false);
 
+  // Auto-show demo accounts when coming from landing page
+  useEffect(() => {
+    if (state.showDemoAccountsOnLogin) {
+      setShowAccounts(true);
+      dispatch({ type: 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN', payload: false });
+    }
+  }, [state.showDemoAccountsOnLogin, dispatch]);
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
