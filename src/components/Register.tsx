@@ -74,8 +74,6 @@ export function Register() {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) {
             errorMessage = 'Por favor ingresa un email válido';
-          } else if (state.users.some(u => u.email === value.toLowerCase())) {
-            errorMessage = 'Este email ya está registrado';
           }
         }
         break;
