@@ -26,19 +26,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       if (isMock) {
         // Use mock authentication for demo mode
-        const user = await dataProvider.users.authenticate(email, password);
-        if (user) {
-          return { user };
+        const result = await dataProvider.users.authenticate(email, password);
+        if (result.user) {
+          return { user: result.user };
         } else {
-          return { error: { message: 'Email o contraseña incorrectos' } };
+          return { error: { message: result.error?.message || 'Error al iniciar sesión' } };
         }
       } else {
         // Use Supabase authentication for normal mode
-        const user = await dataProvider.users.authenticate(email, password);
-        if (user) {
-          return { user };
+        const result = await dataProvider.users.authenticate(email, password);
+        if (result.user) {
+          return { user: result.user };
         } else {
-          return { error: { message: 'Email o contraseña incorrectos' } };
+          return { error: { message: result.error?.message || 'Error al iniciar sesión' } };
         }
       }
     } catch (error: any) {
