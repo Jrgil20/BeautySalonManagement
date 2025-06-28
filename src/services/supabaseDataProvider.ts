@@ -47,8 +47,8 @@ function dbUserToUser(dbUser: Database['public']['Tables']['users']['Row']): Use
 // Helper function to convert database row to Product type
 function dbProductToProduct(dbProduct: Database['public']['Tables']['products']['Row']): Product {
   return {
-    id: dbProduct.id,
-    name: dbProduct.name,
+    id: dbProduct.id_product,
+    name: dbProduct.name_product,
     brand: dbProduct.brand,
     category: dbProduct.category,
     stock: dbProduct.stock,
@@ -66,8 +66,8 @@ function dbProductToProduct(dbProduct: Database['public']['Tables']['products'][
 // Helper function to convert database row to Service type
 function dbServiceToService(dbService: Database['public']['Tables']['services']['Row']): Service {
   return {
-    id: dbService.id,
-    name: dbService.name,
+    id: dbService.id_service,
+    name: dbService.name_service,
     description: dbService.description,
     price: dbService.price,
     duration: dbService.duration,
@@ -84,8 +84,8 @@ function dbServiceToService(dbService: Database['public']['Tables']['services'][
 // Helper function to convert database row to Supplier type
 function dbSupplierToSupplier(dbSupplier: Database['public']['Tables']['suppliers']['Row']): Supplier {
   return {
-    id: dbSupplier.id,
-    name: dbSupplier.name,
+    id: dbSupplier.id_supplier,
+    name: dbSupplier.name_supplier,
     contactPerson: dbSupplier.contact_person,
     email: dbSupplier.email,
     phone: dbSupplier.phone,
@@ -113,7 +113,7 @@ class SupabaseProductService implements ProductService {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .eq('id', id)
+      .eq('id_product', id)
       .single();
     
     if (error) {
@@ -127,7 +127,7 @@ class SupabaseProductService implements ProductService {
     const { data: result, error } = await supabase
       .from('products')
       .insert({
-        name: data.name,
+        name_product: data.name,
         brand: data.brand,
         category: data.category,
         stock: data.stock,
@@ -147,7 +147,7 @@ class SupabaseProductService implements ProductService {
 
   async update(id: string, data: Partial<Product>): Promise<Product> {
     const updateData: any = {};
-    if (data.name !== undefined) updateData.name = data.name;
+    if (data.name !== undefined) updateData.name_product = data.name;
     if (data.brand !== undefined) updateData.brand = data.brand;
     if (data.category !== undefined) updateData.category = data.category;
     if (data.stock !== undefined) updateData.stock = data.stock;
@@ -162,7 +162,7 @@ class SupabaseProductService implements ProductService {
     const { data: result, error } = await supabase
       .from('products')
       .update(updateData)
-      .eq('id', id)
+      .eq('id_product', id)
       .select()
       .single();
     
@@ -174,7 +174,7 @@ class SupabaseProductService implements ProductService {
     const { error } = await supabase
       .from('products')
       .delete()
-      .eq('id', id);
+      .eq('id_product', id);
     
     if (error) throw error;
     return true;
@@ -223,7 +223,7 @@ class SupabaseProductService implements ProductService {
         stock: quantity,
         updated_at: new Date().toISOString()
       })
-      .eq('id', id)
+      .eq('id_product', id)
       .select()
       .single();
     
@@ -248,7 +248,7 @@ class SupabaseServiceService implements ServiceService {
     const { data, error } = await supabase
       .from('services')
       .select('*')
-      .eq('id', id)
+      .eq('id_service', id)
       .single();
     
     if (error) {
@@ -262,7 +262,7 @@ class SupabaseServiceService implements ServiceService {
     const { data: result, error } = await supabase
       .from('services')
       .insert({
-        name: data.name,
+        name_service: data.name,
         description: data.description,
         price: data.price,
         duration: data.duration,
@@ -281,7 +281,7 @@ class SupabaseServiceService implements ServiceService {
 
   async update(id: string, data: Partial<Service>): Promise<Service> {
     const updateData: any = {};
-    if (data.name !== undefined) updateData.name = data.name;
+    if (data.name !== undefined) updateData.name_service = data.name;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.price !== undefined) updateData.price = data.price;
     if (data.duration !== undefined) updateData.duration = data.duration;
@@ -295,7 +295,7 @@ class SupabaseServiceService implements ServiceService {
     const { data: result, error } = await supabase
       .from('services')
       .update(updateData)
-      .eq('id', id)
+      .eq('id_service', id)
       .select()
       .single();
     
@@ -307,7 +307,7 @@ class SupabaseServiceService implements ServiceService {
     const { error } = await supabase
       .from('services')
       .delete()
-      .eq('id', id);
+      .eq('id_service', id);
     
     if (error) throw error;
     return true;
@@ -363,7 +363,7 @@ class SupabaseSupplierService implements SupplierService {
     const { data, error } = await supabase
       .from('suppliers')
       .select('*')
-      .eq('id', id)
+      .eq('id_supplier', id)
       .single();
     
     if (error) {
@@ -377,7 +377,7 @@ class SupabaseSupplierService implements SupplierService {
     const { data: result, error } = await supabase
       .from('suppliers')
       .insert({
-        name: data.name,
+        name_supplier: data.name,
         contact_person: data.contactPerson,
         email: data.email,
         phone: data.phone,
@@ -394,7 +394,7 @@ class SupabaseSupplierService implements SupplierService {
 
   async update(id: string, data: Partial<Supplier>): Promise<Supplier> {
     const updateData: any = {};
-    if (data.name !== undefined) updateData.name = data.name;
+    if (data.name !== undefined) updateData.name_supplier = data.name;
     if (data.contactPerson !== undefined) updateData.contact_person = data.contactPerson;
     if (data.email !== undefined) updateData.email = data.email;
     if (data.phone !== undefined) updateData.phone = data.phone;
@@ -406,7 +406,7 @@ class SupabaseSupplierService implements SupplierService {
     const { data: result, error } = await supabase
       .from('suppliers')
       .update(updateData)
-      .eq('id', id)
+      .eq('id_supplier', id)
       .select()
       .single();
     
@@ -418,7 +418,7 @@ class SupabaseSupplierService implements SupplierService {
     const { error } = await supabase
       .from('suppliers')
       .delete()
-      .eq('id', id);
+      .eq('id_supplier', id);
     
     if (error) throw error;
     return true;
@@ -441,7 +441,7 @@ class SupabaseSupplierService implements SupplierService {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .in('id', supplier.products);
+      .in('id_product', supplier.products);
     
     if (error) throw error;
     return data.map(dbProductToProduct);

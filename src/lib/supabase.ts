@@ -55,8 +55,8 @@ export interface Database {
       };
       products: {
         Row: {
-          id: string;
-          name: string;
+          id_product: string;
+          name_product: string;
           brand: string;
           category: string;
           stock: number;
@@ -70,8 +70,8 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          name: string;
+          id_product?: string;
+          name_product: string;
           brand: string;
           category: string;
           stock: number;
@@ -85,8 +85,8 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          id?: string;
-          name?: string;
+          id_product?: string;
+          name_product?: string;
           brand?: string;
           category?: string;
           stock?: number;
@@ -101,8 +101,8 @@ export interface Database {
       };
       services: {
         Row: {
-          id: string;
-          name: string;
+          id_service: string;
+          name_service: string;
           description: string;
           price: number;
           duration: number;
@@ -115,8 +115,8 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          name: string;
+          id_service?: string;
+          name_service: string;
           description: string;
           price: number;
           duration: number;
@@ -129,8 +129,8 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          id?: string;
-          name?: string;
+          id_service?: string;
+          name_service?: string;
           description?: string;
           price?: number;
           duration?: number;
@@ -144,8 +144,8 @@ export interface Database {
       };
       suppliers: {
         Row: {
-          id: string;
-          name: string;
+          id_supplier: string;
+          name_supplier: string;
           contact_person: string;
           email: string;
           phone: string;
@@ -156,8 +156,8 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
-          id?: string;
-          name: string;
+          id_supplier?: string;
+          name_supplier: string;
           contact_person: string;
           email: string;
           phone: string;
@@ -168,8 +168,8 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          id?: string;
-          name?: string;
+          id_supplier?: string;
+          name_supplier?: string;
           contact_person?: string;
           email?: string;
           phone?: string;
