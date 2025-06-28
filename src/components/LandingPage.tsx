@@ -27,21 +27,8 @@ export function LandingPage() {
 
   const handleViewDemo = () => {
     switchToMock(); // Use demonstration data
-    // Simulate login with default demo user
-    const demoUser = {
-      id: '1',
-      email: 'admin@glamstock.com',
-      password: 'admin123',
-      name: 'Ana García',
-      role: 'admin' as const,
-      isActive: true,
-      salonId: 'salon-1',
-      salonName: 'Glam Stock Central',
-      lastLogin: new Date(),
-      createdAt: new Date(),
-    };
-    dispatch({ type: 'LOGIN_USER', payload: demoUser });
-    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'dashboard' });
+    // Navigate to login page where demo accounts will be displayed
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'login' });
   };
   
   const features = [
