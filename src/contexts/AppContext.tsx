@@ -139,7 +139,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
 const AppContext = createContext<{
   state: AppState;
-  dispatch: React.Dispatch<AppAction>;
+  dispatch: (action: AppAction) => Promise<void> | void;
 } | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -205,6 +205,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!state.currentUser?.salonId) return;
       
       try {
+        // Load actual data from database when not in mock mode
+        if (!isMock) {
+          const [products, services, suppliers] = await Promise.all([
+            dataProvider.products.getAll(state.currentUser.salonId),
+            dataProvider.services.getAll(state.currentUser.salonId),
+            dataProvider.suppliers.getAll(state.currentUser.salonId),
+          ]);
+          
+          dispatch({ type: 'SET_PRODUCTS', payload: products });
+          dispatch({ type: 'SET_SERVICES', payload: services });
+          dispatch({ type: 'SET_SUPPLIERS', payload: suppliers });
+        }
+        
         const kpis = await dataProvider.kpis.getDashboardKPIs(state.currentUser.salonId);
         dispatch({ type: 'UPDATE_KPIS', payload: kpis });
       } catch (error) {
@@ -213,7 +226,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
     
     loadSalonData();
-  }, [state.currentUser?.salonId, dataProvider, dispatch]);
+  }, [state.currentUser?.salonId, dataProvider, isMock, dispatch]);
   
   // Handle demo user login
   const handleDemoLogin = React.useCallback(async (email: string, password: string) => {
@@ -230,12 +243,56 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [dataProvider]);
   
+  // Enhanced dispatch that also saves to database when not in mock mode
+  const enhancedDispatch = React.useCallback(async (action: AppAction) => {
+    // First update local state
+    dispatch(action);
+    
+    // If not in mock mode and user is logged in, also save to database
+    if (!isMock && state.currentUser) {
+      try {
+        switch (action.type) {
+          case 'ADD_SUPPLIER':
+            await dataProvider.suppliers.create(action.payload);
+            break;
+          case 'UPDATE_SUPPLIER':
+            await dataProvider.suppliers.update(action.payload.id, action.payload);
+            break;
+          case 'DELETE_SUPPLIER':
+            await dataProvider.suppliers.delete(action.payload);
+            break;
+          case 'ADD_PRODUCT':
+            await dataProvider.products.create(action.payload);
+            break;
+          case 'UPDATE_PRODUCT':
+            await dataProvider.products.update(action.payload.id, action.payload);
+            break;
+          case 'DELETE_PRODUCT':
+            await dataProvider.products.delete(action.payload);
+            break;
+          case 'ADD_SERVICE':
+            await dataProvider.services.create(action.payload);
+            break;
+          case 'UPDATE_SERVICE':
+            await dataProvider.services.update(action.payload.id, action.payload);
+            break;
+          case 'DELETE_SERVICE':
+            await dataProvider.services.delete(action.payload);
+            break;
+        }
+      } catch (error) {
+        console.error('Error saving to database:', error);
+        // You might want to show a user-friendly error message here
+      }
+    }
+  }, [dataProvider, isMock, state.currentUser, dispatch]);
+  
   // Add demo login function to context
   const contextValue = React.useMemo(() => ({
     state,
-    dispatch,
+    dispatch: enhancedDispatch,
     demoLogin: handleDemoLogin,
-  }), [state, dispatch, handleDemoLogin]);
+  }), [state, enhancedDispatch, handleDemoLogin]);
 
   return (
     <AppContext.Provider value={contextValue}>
