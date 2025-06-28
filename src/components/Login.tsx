@@ -54,10 +54,17 @@ export function Login() {
       const { error: signInError } = await signIn(email, password);
       
       if (signInError) {
-        if (signInError.message.includes('Invalid login credentials')) {
-          setError('Email o contraseña incorrectos');
-        } else if (signInError.message.includes('Email not confirmed')) {
-          setError('Por favor confirma tu email antes de iniciar sesión');
+        if (signInError.message.includes('Invalid login credentials') || signInError.message.includes('Email not confirmed')) {
+          // Check if it's a demo account that might need confirmation
+          const isDemoAccount = state.users.some(user => user.email === email && user.password === password && user.isActive);
+          
+          if (isDemoAccount && signInError.message.includes('Email not confirmed')) {
+            setError('Cuenta de demostración creada. Por favor revisa tu email para confirmar la cuenta, o intenta de nuevo en unos segundos.');
+          } else if (isDemoAccount) {
+            setError('Creando cuenta de demostración... Por favor intenta de nuevo en unos segundos.');
+          } else {
+            setError('Email o contraseña incorrectos');
+          }
         } else {
           setError(signInError.message || 'Error al iniciar sesión');
         }
@@ -299,8 +306,9 @@ export function Login() {
             <h3 className="font-semibold text-purple-800 mb-2">Información de Demostración</h3>
             <ul className="text-sm text-purple-700 space-y-1">
               <li>• Haz clic en cualquier cuenta activa para usar sus credenciales</li>
-              <li>• Las contraseñas se muestran solo para propósitos de demostración</li>
+              <li>• Si es la primera vez, la cuenta se creará automáticamente</li>
               <li>• Cada rol tiene diferentes permisos en el sistema</li>
+              <li>• Puede tomar unos segundos crear nuevas cuentas de demostración</li>
             </ul>
           </aside>
         </section>

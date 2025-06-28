@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { mockUsers } from '../utils/mockData'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -29,10 +30,41 @@ export const auth = {
 
   // Sign in with email and password
   signIn: async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    let { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     })
+    
+    // If login fails with invalid credentials, check if it's a demo user
+    if (error && error.message.includes('Invalid login credentials')) {
+      const demoUser = mockUsers.find(user => user.email === email && user.password === password)
+      
+      if (demoUser && demoUser.isActive) {
+        // Try to create the demo user automatically
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              name: demoUser.name,
+              salon_name: demoUser.salonName,
+              role: demoUser.role,
+            }
+          }
+        })
+        
+        if (!signUpError) {
+          // Now try to sign in again
+          const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+            email,
+            password
+          })
+          data = retryData
+          error = retryError
+        }
+      }
+    }
+    
     return { data, error }
   },
 
