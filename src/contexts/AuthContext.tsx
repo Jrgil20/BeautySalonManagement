@@ -26,20 +26,75 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       if (isMock) {
         // Use mock authentication for demo mode
-        const result = await dataProvider.users.authenticate(email, password);
-        if (result.user) {
-          return { user: result.user };
+        const user = await dataProvider.users.authenticate(email, password);
+        if (user) {
+          return { user };
         } else {
-          return { error: { message: result.error?.message || 'Error al iniciar sesión' } };
+          return { error: { message: 'Email o contraseña incorrectos' } };
         }
       } else {
         // Use Supabase authentication for normal mode
-        const result = await dataProvider.users.authenticate(email, password);
-        if (result.user) {
-          return { user: result.user };
-        } else {
-          return { error: { message: result.error?.message || 'Error al iniciar sesión' } };
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase(),
+          password,
+        });
+
+        if (error) {
+          // Handle specific authentication errors
+          if (error.message === 'Invalid login credentials') {
+            return { error: { message: 'Email o contraseña incorrectos' } };
+          }
+          if (error.message.includes('Email not confirmed')) {
+            return { error: { message: 'Por favor confirma tu email antes de iniciar sesión' } };
+          }
+          return { error: { message: error.message || 'Error al iniciar sesión' } };
         }
+
+        if (!data.user) {
+          return { error: { message: 'Error al iniciar sesión' } };
+        }
+
+        // Get user profile from our database
+        const { data: userProfile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          return { error: { message: 'Error al obtener el perfil del usuario' } };
+        }
+
+        if (!userProfile) {
+          // User exists in auth but not in our users table or is inactive
+          // This can happen if profile creation failed during registration
+          return { error: { message: 'Perfil de usuario no encontrado. Por favor contacta al soporte.' } };
+        }
+
+        // Convert database user to our User type
+        const user: User = {
+          id: userProfile.id,
+          email: userProfile.email,
+          password: '', // Don't return password
+          name: userProfile.name,
+          role: userProfile.role,
+          avatar: userProfile.avatar,
+          isActive: userProfile.is_active,
+          salonId: userProfile.salon_id,
+          salonName: userProfile.salon_name,
+          lastLogin: userProfile.last_login ? new Date(userProfile.last_login) : undefined,
+          createdAt: new Date(userProfile.created_at),
+        };
+
+        // Update last login
+        await supabase
+          .from('users')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', data.user.id);
+
+        return { user };
       }
     } catch (error: any) {
       console.error('Error during sign in:', error);
@@ -57,7 +112,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { error: { message: 'El registro no está disponible en modo demo' } };
       }
 
-      // Use Supabase authentication for user registration
+      // First, check if user already exists in our database
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email.toLowerCase())
+        .maybeSingle();
+
+      if (existingUser) {
+        return { error: { message: 'Este email ya está registrado. Intenta iniciar sesión.' } };
+      }
+
+      // Create user in Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
@@ -70,32 +136,42 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (error) {
+        if (error.message.includes('User already registered')) {
+          return { error: { message: 'Este email ya está registrado. Intenta iniciar sesión.' } };
+        }
+        if (error.message.includes('Password should be at least')) {
+          return { error: { message: 'La contraseña debe tener al menos 6 caracteres.' } };
+        }
         return { error: { message: error.message } };
       }
 
-      // If signup successful, create user profile in our database
-      if (data.user) {
-        const newUser: Omit<User, 'createdAt'> = {
+      if (!data.user) {
+        return { error: { message: 'Error al crear la cuenta de usuario' } };
+      }
+
+      // Create user profile in our database
+      const salonId = `salon-${Date.now()}`;
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert({
           id: data.user.id,
           email: email.toLowerCase(),
           name: metadata?.name || 'New User',
           role: 'admin',
-          isActive: true,
-          salonId: `salon-${Date.now()}`,
-          salonName: metadata?.salonName || 'New Salon',
-        };
+          is_active: true,
+          salon_id: salonId,
+          salon_name: metadata?.salonName || 'New Salon',
+        });
 
-        try {
-          await dataProvider.users.create(newUser);
-        } catch (dbError) {
-          console.error('Error creating user profile:', dbError);
-          // User was created in auth but profile creation failed
-          // This is not a critical error for the signup flow
-        }
+      if (profileError) {
+        console.error('Error creating user profile:', profileError);
+        // If profile creation fails, we should clean up the auth user
+        // But for now, we'll just return an error
+        return { error: { message: 'Error al crear el perfil de usuario. Por favor intenta de nuevo.' } };
       }
 
       return {};
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating user:', error);
       return { error: { message: 'Error al crear la cuenta. Por favor intenta de nuevo.' } };
     } finally {
