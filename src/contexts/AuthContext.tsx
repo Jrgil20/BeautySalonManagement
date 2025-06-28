@@ -136,7 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (error) {
-        if (error.message.includes('User already registered')) {
+        if (error.message.includes('User already registered') || error.message.includes('user_already_exists')) {
           return { error: { message: 'Este email ya está registrado. Intenta iniciar sesión.' } };
         }
         if (error.message.includes('Password should be at least')) {
