@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './contexts/AppContext';
-import { AuthProvider } from './contexts/AuthContext';
+import { DataProviderProvider } from './contexts/DataProviderContext';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { Inventory } from './components/Inventory';
@@ -9,18 +9,9 @@ import { Suppliers } from './components/Suppliers';
 import { Login } from './components/Login';
 import { Register } from './components/Register';
 import { LandingPage } from './components/LandingPage';
-import { mockProducts, mockServices, mockSuppliers, mockUsers } from './utils/mockData';
 
 function AppContent() {
   const { state, dispatch } = useApp();
-
-  useEffect(() => {
-    // Initialize with mock data
-    dispatch({ type: 'SET_PRODUCTS', payload: mockProducts });
-    dispatch({ type: 'SET_SERVICES', payload: mockServices });
-    dispatch({ type: 'SET_SUPPLIERS', payload: mockSuppliers });
-    dispatch({ type: 'SET_USERS', payload: mockUsers });
-  }, [dispatch]);
 
   // If no user is logged in, show landing page or login based on current view
   if (!state.currentUser) {
@@ -57,11 +48,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
+    <DataProviderProvider>
       <AppProvider>
         <AppContent />
       </AppProvider>
-    </AuthProvider>
+    </DataProviderProvider>
   );
 }
 

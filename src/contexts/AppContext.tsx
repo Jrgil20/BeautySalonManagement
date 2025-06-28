@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
+import { useDataProvider } from './DataProviderContext';
 import { Product, Service, Supplier, InventoryMovement, Notification, KPIData, User, InventoryFilterType } from '../types';
 
 interface AppState {
@@ -13,8 +13,6 @@ interface AppState {
   currentView: string;
   currentUser: User | null;
   inventoryFilter: InventoryFilterType | null;
-  showDemoAccountsOnLogin: boolean;
-  hideDemoAccountsButton: boolean;
 }
 
 type AppAction =
@@ -41,9 +39,7 @@ type AppAction =
   | { type: 'REMOVE_NOTIFICATION'; payload: string }
   | { type: 'UPDATE_KPIS'; payload: Partial<KPIData> }
   | { type: 'SET_CURRENT_VIEW'; payload: string }
-  | { type: 'SET_INVENTORY_FILTER'; payload: InventoryFilterType | null }
-  | { type: 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN'; payload: boolean }
-  | { type: 'SET_HIDE_DEMO_ACCOUNTS_BUTTON'; payload: boolean };
+  | { type: 'SET_INVENTORY_FILTER'; payload: InventoryFilterType | null };
 
 const initialState: AppState = {
   products: [],
@@ -65,8 +61,6 @@ const initialState: AppState = {
   currentView: 'landing',
   currentUser: null,
   inventoryFilter: null,
-  showDemoAccountsOnLogin: false,
-  hideDemoAccountsButton: false,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -138,10 +132,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, currentView: action.payload };
     case 'SET_INVENTORY_FILTER':
       return { ...state, inventoryFilter: action.payload };
-    case 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN':
-      return { ...state, showDemoAccountsOnLogin: action.payload };
-    case 'SET_HIDE_DEMO_ACCOUNTS_BUTTON':
-      return { ...state, hideDemoAccountsButton: action.payload };
     default:
       return state;
   }
@@ -155,19 +145,100 @@ const AppContext = createContext<{
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
   
-  // Sync auth user with app state
-  const { user } = useAuth();
+  // Get data provider instance
+  const { dataProvider, isMock } = useDataProvider();
   
+  // Load initial data when data provider changes
   React.useEffect(() => {
-    if (user && !state.currentUser) {
-      dispatch({ type: 'LOGIN_USER', payload: user });
-    } else if (!user && state.currentUser) {
-      dispatch({ type: 'LOGOUT_USER' });
+    const loadInitialData = async () => {
+      try {
+        // Load data for all salons when using mock data
+        if (isMock) {
+          const [products, services, suppliers, users] = await Promise.all([
+            dataProvider.products.getAll(''),
+            dataProvider.services.getAll(''),
+            dataProvider.suppliers.getAll(''),
+            dataProvider.users.getAll(''),
+          ]);
+          
+          // Get all data regardless of salon for mock
+          const allProducts = await Promise.all([
+            dataProvider.products.getAll('salon-1'),
+            dataProvider.products.getAll('salon-2'),
+            dataProvider.products.getAll('salon-3'),
+          ]);
+          
+          const allServices = await Promise.all([
+            dataProvider.services.getAll('salon-1'),
+            dataProvider.services.getAll('salon-2'),
+            dataProvider.services.getAll('salon-3'),
+          ]);
+          
+          const allSuppliers = await Promise.all([
+            dataProvider.suppliers.getAll('salon-1'),
+            dataProvider.suppliers.getAll('salon-2'),
+            dataProvider.suppliers.getAll('salon-3'),
+          ]);
+          
+          const allUsers = await Promise.all([
+            dataProvider.users.getAll('salon-1'),
+            dataProvider.users.getAll('salon-2'),
+            dataProvider.users.getAll('salon-3'),
+          ]);
+          
+          dispatch({ type: 'SET_PRODUCTS', payload: allProducts.flat() });
+          dispatch({ type: 'SET_SERVICES', payload: allServices.flat() });
+          dispatch({ type: 'SET_SUPPLIERS', payload: allSuppliers.flat() });
+          dispatch({ type: 'SET_USERS', payload: allUsers.flat() });
+        }
+      } catch (error) {
+        console.error('Error loading initial data:', error);
+      }
+    };
+    
+    loadInitialData();
+  }, [dataProvider, isMock, dispatch]);
+  
+  // Load salon-specific data when current user changes
+  React.useEffect(() => {
+    const loadSalonData = async () => {
+      if (!state.currentUser?.salonId) return;
+      
+      try {
+        const kpis = await dataProvider.kpis.getDashboardKPIs(state.currentUser.salonId);
+        dispatch({ type: 'UPDATE_KPIS', payload: kpis });
+      } catch (error) {
+        console.error('Error loading salon data:', error);
+      }
+    };
+    
+    loadSalonData();
+  }, [state.currentUser?.salonId, dataProvider, dispatch]);
+  
+  // Handle demo user login
+  const handleDemoLogin = React.useCallback(async (email: string, password: string) => {
+    try {
+      const user = await dataProvider.users.authenticate(email, password);
+      if (user) {
+        dispatch({ type: 'LOGIN_USER', payload: user });
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error during demo login:', error);
+      return false;
     }
-  }, [user, state.currentUser]);
+  }, [dataProvider]);
+  
+  // Add demo login function to context
+  const contextValue = React.useMemo(() => ({
+    state,
+    dispatch,
+    demoLogin: handleDemoLogin,
+  }), [state, dispatch, handleDemoLogin]);
 
   return (
-    <AppContext.Provider value={{ state, dispatch }}>
+    <AppContext.Provider value={contextValue}>
       {children}
     </AppContext.Provider>
   );

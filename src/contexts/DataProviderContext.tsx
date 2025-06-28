@@ -63,4 +63,4 @@ export function useDataProvider() {
 export function useDataProviderInstance() {
   const { dataProvider } = useDataProvider();
   return dataProvider;
-} 
+}

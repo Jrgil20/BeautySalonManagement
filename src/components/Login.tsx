@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { useAuth } from '../contexts/AuthContext';
+import { useDataProvider } from '../contexts/DataProviderContext';
 import { 
   LogIn, 
   Eye, 
@@ -16,22 +16,14 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export function Login() {
-  const { state, dispatch } = useApp();
-  const { signIn, loading } = useAuth();
+  const { state, dispatch, demoLogin } = useApp();
+  const { isMock } = useDataProvider();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const [showAccounts, setShowAccounts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-show demo accounts when coming from landing page
-  useEffect(() => {
-    if (state.showDemoAccountsOnLogin) {
-      setShowAccounts(true);
-      dispatch({ type: 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN', payload: false });
-    }
-  }, [state.showDemoAccountsOnLogin, dispatch]);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -51,26 +43,17 @@ export function Login() {
     }
 
     try {
-      const { error: signInError } = await signIn(email, password);
-      
-      if (signInError) {
-        if (signInError.message.includes('Invalid login credentials') || signInError.message.includes('Email not confirmed')) {
-          // Check if it's a demo account that might need confirmation
-          const isDemoAccount = state.users.some(user => user.email === email && user.password === password && user.isActive);
-          
-          if (isDemoAccount && signInError.message.includes('Email not confirmed')) {
-            setError('Cuenta de demostración creada. Por favor revisa tu email para confirmar la cuenta, o intenta de nuevo en unos segundos.');
-          } else if (isDemoAccount) {
-            setError('Creando cuenta de demostración... Por favor intenta de nuevo en unos segundos.');
-          } else {
-            setError('Email o contraseña incorrectos');
-          }
+      if (isMock) {
+        // Use demo login for mock data
+        const success = await demoLogin(email, password);
+        if (success) {
+          dispatch({ type: 'SET_CURRENT_VIEW', payload: 'dashboard' });
         } else {
-          setError(signInError.message || 'Error al iniciar sesión');
+          setError('Email o contraseña incorrectos');
         }
       } else {
-        // Success - the AuthContext will handle the user state
-        dispatch({ type: 'SET_CURRENT_VIEW', payload: 'dashboard' });
+        // TODO: Implement Supabase authentication here
+        setError('Autenticación con Supabase no implementada aún');
       }
     } catch (err) {
       setError('Error inesperado. Por favor intenta de nuevo.');
@@ -79,56 +62,10 @@ export function Login() {
     }
   };
 
-  const handleQuickLogin = (userEmail: string, userPassword: string) => {
-    setEmail(userEmail);
-    setPassword(userPassword);
-    setError('');
-  };
-
-  const getRoleColor = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'bg-red-100 text-red-800';
-      case 'manager':
-        return 'bg-blue-100 text-blue-800';
-      case 'employee':
-        return 'bg-green-100 text-green-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return Shield;
-      case 'manager':
-        return Users;
-      case 'employee':
-        return User;
-      default:
-        return User;
-    }
-  };
-
-  const getRoleName = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'Administrador';
-      case 'manager':
-        return 'Gerente';
-      case 'employee':
-        return 'Empleado';
-      default:
-        return 'Usuario';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 flex items-center justify-center p-4">
-      <div className={`w-full gap-8 ${showAccounts ? 'max-w-6xl grid grid-cols-1 lg:grid-cols-2' : 'max-w-md'}`}>
-        {/* Login Form */}
-        <section className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
+      <div className="w-full max-w-md">
+        <section className="bg-white rounded-2xl shadow-2xl p-8">
           <header className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full mb-4">
               <LogIn className="w-8 h-8 text-white" aria-hidden="true" />
@@ -190,10 +127,10 @@ export function Login() {
 
             <button
               type="submit"
-              disabled={isSubmitting || loading}
+              disabled={isSubmitting}
               className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isSubmitting || loading ? (
+              {isSubmitting ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   Iniciando sesión...
@@ -205,13 +142,13 @@ export function Login() {
           </form>
 
           <footer className="mt-8 text-center">
-            {!state.hideDemoAccountsButton && (
-              <button
-                onClick={() => setShowAccounts(!showAccounts)}
-                className="text-purple-600 hover:text-purple-700 text-sm font-medium transition-colors"
-              >
-                {showAccounts ? 'Ocultar' : 'Ver'} cuentas de demostración
-              </button>
+            {isMock && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700 font-medium">Modo Demo Activo</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Usa cualquier email/contraseña de las cuentas de demostración
+                </p>
+              </div>
             )}
             <div className="mt-4">
               <button
@@ -224,94 +161,24 @@ export function Login() {
           </footer>
         </section>
 
-        {/* Registered Accounts Panel */}
-        {showAccounts && (
-          <section className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12">
-          <header className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Cuentas Registradas</h2>
-            <div className="flex items-center text-sm text-gray-600">
-              <Users className="w-4 h-4 mr-1" aria-hidden="true" />
-              {state.users.length} usuarios
+        {isMock && (
+          <div className="mt-6 bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cuentas de Demostración</h3>
+            <div className="space-y-3 text-sm">
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium">admin@glamstock.com / admin123</p>
+                <p className="text-gray-600">Administrador - Glam Stock Central</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium">manager@glamstock.com / manager123</p>
+                <p className="text-gray-600">Gerente - Glam Stock Central</p>
+              </div>
+              <div className="p-3 bg-gray-50 rounded-lg">
+                <p className="font-medium">admin@estiloytijeras.com / admin123</p>
+                <p className="text-gray-600">Administrador - Estilo y Tijeras</p>
+              </div>
             </div>
-          </header>
-
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {state.users.map((user) => {
-              const RoleIcon = getRoleIcon(user.role);
-              
-              return (
-                <article
-                  key={user.id}
-                  className={`p-4 rounded-lg border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
-                    user.isActive 
-                      ? 'border-gray-200 hover:border-purple-300 bg-white' 
-                      : 'border-gray-100 bg-gray-50 opacity-60'
-                  }`}
-                  onClick={() => user.isActive && handleQuickLogin(user.email, user.password)}
-                >
-                  <header className="flex items-start justify-between mb-3">
-                    <div className="flex items-center">
-                      <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center mr-3">
-                        <RoleIcon className="w-5 h-5 text-white" aria-hidden="true" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRoleColor(user.role)}`}>
-                        {getRoleName(user.role)}
-                      </span>
-                      {!user.isActive && (
-                        <span className="text-xs text-red-500 mt-1">Inactivo</span>
-                      )}
-                    </div>
-                  </header>
-
-                  <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
-                    <div>
-                      <span className="font-medium">Contraseña:</span>
-                      <p className="font-mono bg-gray-100 px-2 py-1 rounded mt-1">
-                        ••••••••
-                      </p>
-                    </div>
-                    <div>
-                      <span className="font-medium">Último acceso:</span>
-                      <div className="flex items-center mt-1">
-                        <Clock className="w-3 h-3 mr-1" aria-hidden="true" />
-                        <time>
-                          {user.lastLogin 
-                            ? format(user.lastLogin, 'dd/MM/yyyy', { locale: es })
-                            : 'Nunca'
-                          }
-                        </time>
-                      </div>
-                    </div>
-                  </div>
-
-                  {user.isActive && (
-                    <footer className="mt-3 pt-3 border-t border-gray-100">
-                      <p className="text-xs text-purple-600 font-medium">
-                        Haz clic para usar estas credenciales
-                      </p>
-                    </footer>
-                  )}
-                </article>
-              );
-            })}
           </div>
-
-          <aside className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
-            <h3 className="font-semibold text-purple-800 mb-2">Información de Demostración</h3>
-            <ul className="text-sm text-purple-700 space-y-1">
-              <li>• Haz clic en cualquier cuenta activa para usar sus credenciales</li>
-              <li>• Si es la primera vez, la cuenta se creará automáticamente</li>
-              <li>• Cada rol tiene diferentes permisos en el sistema</li>
-              <li>• Puede tomar unos segundos crear nuevas cuentas de demostración</li>
-            </ul>
-          </aside>
-        </section>
         )}
       </div>
     </div>

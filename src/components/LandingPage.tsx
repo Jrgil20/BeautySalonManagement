@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useDataProvider } from '../contexts/DataProviderContext';
 import { 
   Sparkles, 
   Package, 
@@ -17,16 +18,32 @@ import {
 
 export function LandingPage() {
   const { dispatch } = useApp();
+  const { switchToMock, switchToDatabase } = useDataProvider();
 
   const handleGetStarted = () => {
-    dispatch({ type: 'SET_HIDE_DEMO_ACCOUNTS_BUTTON', payload: true });
+    switchToDatabase(); // Usar datos reales de Supabase
     dispatch({ type: 'SET_CURRENT_VIEW', payload: 'login' });
   };
 
   const handleViewDemo = () => {
-    dispatch({ type: 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN', payload: true });
-    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'login' });
+    switchToMock(); // Usar datos de demostración
+    // Simular login con usuario demo por defecto
+    const demoUser = {
+      id: '1',
+      email: 'admin@glamstock.com',
+      password: 'admin123',
+      name: 'Ana García',
+      role: 'admin' as const,
+      isActive: true,
+      salonId: 'salon-1',
+      salonName: 'Glam Stock Central',
+      lastLogin: new Date(),
+      createdAt: new Date(),
+    };
+    dispatch({ type: 'LOGIN_USER', payload: demoUser });
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'dashboard' });
   };
+  
   const features = [
     {
       icon: Package,

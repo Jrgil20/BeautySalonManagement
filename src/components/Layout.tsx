@@ -1,6 +1,5 @@
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
-import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, 
   Package, 
@@ -26,7 +25,6 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { state, dispatch } = useApp();
-  const { signOut, user } = useAuth();
   const { notifications, unreadCount, markAsRead } = useNotifications();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
@@ -44,12 +42,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut();
-      dispatch({ type: 'LOGOUT_USER' });
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    dispatch({ type: 'LOGOUT_USER' });
   };
 
   const handleNotificationClick = () => {
@@ -177,16 +170,16 @@ export function Layout({ children }: LayoutProps) {
           <section className="flex items-center mb-4">
             <div className="w-10 h-10 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full flex items-center justify-center mr-3">
               <span className="text-white font-semibold text-sm" aria-label="Iniciales del usuario">
-                {(user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}
+                {(state.currentUser?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase()}
               </span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.name}
+                {state.currentUser?.name}
               </p>
               <p className="text-xs text-gray-500 truncate">
-                {user?.role === 'admin' ? 'Administrador' : 
-                 user?.role === 'manager' ? 'Gerente' : 'Empleado'}
+                {state.currentUser?.role === 'admin' ? 'Administrador' : 
+                 state.currentUser?.role === 'manager' ? 'Gerente' : 'Empleado'}
               </p>
             </div>
           </section>
@@ -349,7 +342,7 @@ export function Layout({ children }: LayoutProps) {
               
               <div className="ml-4 flex items-center">
                 <span className="text-sm font-medium text-gray-700 mr-2">
-                  {user?.name}
+                  {state.currentUser?.name}
                 </span>
                 <button
                   onClick={handleLogout}

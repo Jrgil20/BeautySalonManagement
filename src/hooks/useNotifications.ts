@@ -1,11 +1,9 @@
 import { useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { useAuth } from '../contexts/AuthContext';
 import { differenceInDays } from 'date-fns';
 
 export function useNotifications() {
   const { state, dispatch } = useApp();
-  const { user } = useAuth();
 
   useEffect(() => {
     const checkNotifications = () => {
@@ -13,7 +11,7 @@ export function useNotifications() {
       const now = new Date();
 
       // Filter products by current user's salon
-      const salonProducts = state.products.filter(p => p.salonId === user?.salonId);
+      const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
 
       // Check for low stock
       salonProducts.forEach(product => {
@@ -84,7 +82,7 @@ export function useNotifications() {
     const interval = setInterval(checkNotifications, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, [state.products, user?.salonId, dispatch]);
+  }, [state.products, state.currentUser?.salonId, dispatch]);
 
   return {
     notifications: state.notifications,
