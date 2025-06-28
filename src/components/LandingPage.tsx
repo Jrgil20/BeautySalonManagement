@@ -19,6 +19,7 @@ export function LandingPage() {
   const { dispatch } = useApp();
 
   const handleGetStarted = () => {
+    dispatch({ type: 'SET_HIDE_DEMO_ACCOUNTS_BUTTON', payload: true });
     dispatch({ type: 'SET_CURRENT_VIEW', payload: 'login' });
   };
 
