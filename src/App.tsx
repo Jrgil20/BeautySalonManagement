@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { AppProvider, useApp } from './contexts/AppContext';
 import { DataProviderProvider } from './contexts/DataProviderContext';
+import { AuthProvider } from './contexts/AuthContext';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard';
 import { Inventory } from './components/Inventory';
@@ -49,9 +50,11 @@ function AppContent() {
 function App() {
   return (
     <DataProviderProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
+      <AuthProvider>
+        <AppProvider>
+          <AppContent />
+        </AppProvider>
+      </AuthProvider>
     </DataProviderProvider>
   );
 }
