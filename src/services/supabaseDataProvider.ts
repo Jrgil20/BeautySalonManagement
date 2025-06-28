@@ -528,14 +528,39 @@ class SupabaseUserService implements UserService {
     return true;
   }
 
-  async authenticate(email: string, password: string): Promise<User | null> {
+  async authenticate(email: string, password: string): Promise<{ user?: User; error?: { message: string } }> {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) throw error;
-    if (!data.user) return null;
+    if (error) {
+      // Check if it's an invalid credentials error
+      if (error.message === 'Invalid login credentials') {
+        // Check if user exists in our database
+        const { data: existingUser, error: userCheckError } = await supabase
+          .from('users')
+          .select('email')
+          .eq('email', email.toLowerCase())
+          .maybeSingle();
+        
+        if (userCheckError) {
+          return { error: { message: 'Error al verificar el usuario' } };
+        }
+        
+        if (existingUser) {
+          return { error: { message: 'Contraseña incorrecta' } };
+        } else {
+          return { error: { message: 'Email no registrado' } };
+        }
+      }
+      
+      return { error: { message: error.message || 'Error al iniciar sesión' } };
+    }
+    
+    if (!data.user) {
+      return { error: { message: 'Error al iniciar sesión' } };
+    }
 
     // Get user profile
     const { data: userProfile, error: profileError } = await supabase
@@ -546,17 +571,17 @@ class SupabaseUserService implements UserService {
       .maybeSingle();
 
     if (profileError) {
-      throw profileError;
+      return { error: { message: 'Error al obtener el perfil del usuario' } };
     }
 
     if (!userProfile) {
-      return null;
+      return { error: { message: 'Usuario inactivo o perfil no encontrado' } };
     }
 
     // Update last login
     await this.updateLastLogin(data.user.id);
 
-    return dbUserToUser(userProfile);
+    return { user: dbUserToUser(userProfile) };
   }
 
   async getBySalon(salonId: string): Promise<User[]> {

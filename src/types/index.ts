@@ -133,7 +133,7 @@ export interface SupplierService extends DataService<Supplier> {
 
 // Interfaz específica para usuarios
 export interface UserService extends DataService<User> {
-  authenticate(email: string, password: string): Promise<User | null>;
+  authenticate(email: string, password: string): Promise<{ user?: User; error?: { message: string } }>;
   getBySalon(salonId: string): Promise<User[]>;
   updateLastLogin(id: string): Promise<User>;
   changePassword(id: string, newPassword: string): Promise<boolean>;
