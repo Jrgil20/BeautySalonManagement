@@ -224,8 +224,6 @@ class MockUserService implements UserService {
     return this.users.find(u => u.id === id) || null;
   }
 
-  async create(data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
-  }
   async create(data: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {
     const user: User = {
       ...data,
@@ -255,18 +253,8 @@ class MockUserService implements UserService {
     return true;
   }
 
-  async authenticate(email: string, password: string): Promise<{ user?: User; error?: { message: string } }> {
-    const user = this.users.find(u => u.email === email && u.isActive);
-    
-    if (!user) {
-      return { error: { message: 'Email no registrado' } };
-    }
-    
-    if (user.password !== password) {
-      return { error: { message: 'Contraseña incorrecta' } };
-    }
-    
-    return { user };
+  async authenticate(email: string, password: string): Promise<User | null> {
+    return this.users.find(u => u.email === email && u.password === password && u.isActive) || null;
   }
 
   async getBySalon(salonId: string): Promise<User[]> {

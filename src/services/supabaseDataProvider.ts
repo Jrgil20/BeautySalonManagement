@@ -475,7 +475,7 @@ class SupabaseUserService implements UserService {
   }
 
   async create(data: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {
-    // Create the user profile (auth user should already exist)
+    // Create the user profile in our database
     const { data: result, error } = await supabase
       .from('users')
       .insert({
@@ -487,7 +487,6 @@ class SupabaseUserService implements UserService {
         is_active: data.isActive,
         salon_id: data.salonId,
         salon_name: data.salonName,
-        last_login: data.lastLogin?.toISOString(),
       })
       .select()
       .single();
@@ -528,60 +527,17 @@ class SupabaseUserService implements UserService {
     return true;
   }
 
-  async authenticate(email: string, password: string): Promise<{ user?: User; error?: { message: string } }> {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      // Check if it's an invalid credentials error
-      if (error.message === 'Invalid login credentials') {
-        // Check if user exists in our database
-        const { data: existingUser, error: userCheckError } = await supabase
-          .from('users')
-          .select('email')
-          .eq('email', email.toLowerCase())
-          .maybeSingle();
-        
-        if (userCheckError) {
-          return { error: { message: 'Error al verificar el usuario' } };
-        }
-        
-        if (existingUser) {
-          return { error: { message: 'Contraseña incorrecta' } };
-        } else {
-          return { error: { message: 'Email no registrado' } };
-        }
-      }
-      
-      return { error: { message: error.message || 'Error al iniciar sesión' } };
-    }
-    
-    if (!data.user) {
-      return { error: { message: 'Error al iniciar sesión' } };
-    }
-
-    // Get user profile
-    const { data: userProfile, error: profileError } = await supabase
+  async authenticate(email: string, password: string): Promise<User | null> {
+    // This method is now handled in AuthContext for better error handling
+    // We'll keep it simple here for compatibility
+    const { data: userProfile } = await supabase
       .from('users')
       .select('*')
-      .eq('id', data.user.id)
+      .eq('email', email.toLowerCase())
       .eq('is_active', true)
       .maybeSingle();
 
-    if (profileError) {
-      return { error: { message: 'Error al obtener el perfil del usuario' } };
-    }
-
-    if (!userProfile) {
-      return { error: { message: 'Usuario inactivo o perfil no encontrado' } };
-    }
-
-    // Update last login
-    await this.updateLastLogin(data.user.id);
-
-    return { user: dbUserToUser(userProfile) };
+    return userProfile ? dbUserToUser(userProfile) : null;
   }
 
   async getBySalon(salonId: string): Promise<User[]> {
