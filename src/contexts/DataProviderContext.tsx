@@ -16,8 +16,8 @@ interface DataProviderProviderProps {
 }
 
 export function DataProviderProvider({ children }: DataProviderProviderProps) {
-  // Por ahora solo usamos mock, pero en el futuro se puede cambiar a base de datos
-  const [isMock, setIsMock] = React.useState(true);
+  // Start in normal mode by default - demo mode only activated explicitly
+  const [isMock, setIsMock] = React.useState(false);
   const [dataProvider, setDataProvider] = React.useState<DataProvider>(mockDataProvider);
 
   const switchToMock = () => {
@@ -26,14 +26,14 @@ export function DataProviderProvider({ children }: DataProviderProviderProps) {
   };
 
   const switchToDatabase = () => {
-    // En el futuro, aquí se inicializaría el proveedor de Supabase
+    // In the future, here the Supabase provider would be initialized
     // const supabaseProvider = new SupabaseDataProvider();
     // setDataProvider(supabaseProvider);
     setIsMock(false);
     
-    // Por ahora, mostrar un mensaje de que no está implementado
-    console.warn('Database provider not implemented yet. Using mock data.');
-    setIsMock(true);
+    // For now, show a message that it's not implemented but keep normal mode
+    console.warn('Database provider not implemented yet. Using mock data in normal mode.');
+    setIsMock(false);
     setDataProvider(mockDataProvider);
   };
 

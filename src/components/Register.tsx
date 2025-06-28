@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useDataProvider } from '../contexts/DataProviderContext';
 import { useAuth } from '../contexts/AuthContext';
 import { 
   UserPlus, 
@@ -18,6 +19,7 @@ import {
 
 export function Register() {
   const { state, dispatch } = useApp();
+  const { isMock } = useDataProvider();
   const { signUp, loading } = useAuth();
   const [step, setStep] = useState(1); // 1: User Info, 2: Salon Info, 3: Success
   const [showPassword, setShowPassword] = useState(false);
@@ -244,6 +246,55 @@ export function Register() {
   const handleGoToLogin = () => {
     dispatch({ type: 'SET_CURRENT_VIEW', payload: 'login' });
   };
+
+  // If in demo mode, show message that registration is not available
+  if (isMock) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-purple-50 to-indigo-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-2xl p-8 lg:p-12 max-w-md w-full text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-orange-500 to-amber-500 rounded-full mb-6">
+            <AlertCircle className="w-8 h-8 text-white" />
+          </div>
+          
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">
+            Modo Demo
+          </h1>
+          
+          <p className="text-gray-600 mb-6">
+            El registro de nuevas cuentas no está disponible en el modo de demostración. 
+            Puedes explorar la aplicación con las cuentas de prueba disponibles.
+          </p>
+          
+          <div className="space-y-3 mb-8">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-left">
+              <p className="text-sm font-medium text-blue-900">Cuentas de Demo Disponibles:</p>
+              <p className="text-xs text-blue-700 mt-1">
+                • admin@glamstock.com / admin123<br/>
+                • manager@glamstock.com / manager123<br/>
+                • admin@estiloytijeras.com / admin123
+              </p>
+            </div>
+          </div>
+          
+          <div className="space-y-3">
+            <button
+              onClick={handleGoToLogin}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
+            >
+              Ir a Iniciar Sesión
+            </button>
+            
+            <button
+              onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'landing' })}
+              className="w-full bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+            >
+              Volver al Inicio
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (step === 3) {
     return (

@@ -21,13 +21,13 @@ export function LandingPage() {
   const { switchToMock, switchToDatabase } = useDataProvider();
 
   const handleGetStarted = () => {
-    switchToDatabase(); // Usar datos reales de Supabase
+    switchToDatabase(); // Use real Supabase data (or mock in normal mode)
     dispatch({ type: 'SET_CURRENT_VIEW', payload: 'login' });
   };
 
   const handleViewDemo = () => {
-    switchToMock(); // Usar datos de demostración
-    // Simular login con usuario demo por defecto
+    switchToMock(); // Use demonstration data
+    // Simulate login with default demo user
     const demoUser = {
       id: '1',
       email: 'admin@glamstock.com',
