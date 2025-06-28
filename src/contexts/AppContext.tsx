@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import { useAuth } from './AuthContext';
 import { Product, Service, Supplier, InventoryMovement, Notification, KPIData, User, InventoryFilterType } from '../types';
 
 interface AppState {
@@ -153,6 +154,17 @@ const AppContext = createContext<{
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  
+  // Sync auth user with app state
+  const { user } = useAuth();
+  
+  React.useEffect(() => {
+    if (user && !state.currentUser) {
+      dispatch({ type: 'LOGIN_USER', payload: user });
+    } else if (!user && state.currentUser) {
+      dispatch({ type: 'LOGOUT_USER' });
+    }
+  }, [user, state.currentUser]);
 
   return (
     <AppContext.Provider value={{ state, dispatch }}>

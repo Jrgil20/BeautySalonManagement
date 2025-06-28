@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   LogIn, 
   Eye, 
@@ -16,11 +17,13 @@ import { es } from 'date-fns/locale';
 
 export function Login() {
   const { state, dispatch } = useApp();
+  const { signIn, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [showAccounts, setShowAccounts] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Auto-show demo accounts when coming from landing page
   useEffect(() => {
@@ -29,9 +32,10 @@ export function Login() {
       dispatch({ type: 'SET_SHOW_DEMO_ACCOUNTS_ON_LOGIN', payload: false });
     }
   }, [state.showDemoAccountsOnLogin, dispatch]);
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsSubmitting(true);
 
     // Validación básica
     if (!email.trim() || !password.trim()) {
@@ -46,16 +50,25 @@ export function Login() {
       return;
     }
 
-    const user = state.users.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-      if (!user.isActive) {
-        setError('Esta cuenta está desactivada. Contacta al administrador.');
-        return;
+    try {
+      const { error: signInError } = await signIn(email, password);
+      
+      if (signInError) {
+        if (signInError.message.includes('Invalid login credentials')) {
+          setError('Email o contraseña incorrectos');
+        } else if (signInError.message.includes('Email not confirmed')) {
+          setError('Por favor confirma tu email antes de iniciar sesión');
+        } else {
+          setError(signInError.message || 'Error al iniciar sesión');
+        }
+      } else {
+        // Success - the AuthContext will handle the user state
+        dispatch({ type: 'SET_CURRENT_VIEW', payload: 'dashboard' });
       }
-      dispatch({ type: 'LOGIN_USER', payload: user });
-    } else {
-      setError('Email o contraseña incorrectos');
+    } catch (err) {
+      setError('Error inesperado. Por favor intenta de nuevo.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -170,9 +183,17 @@ export function Login() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium"
+              disabled={isSubmitting || loading}
+              className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Iniciar Sesión
+              {isSubmitting || loading ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Iniciando sesión...
+                </div>
+              ) : (
+                'Iniciar Sesión'
+              )}
             </button>
           </form>
 

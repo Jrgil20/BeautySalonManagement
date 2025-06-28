@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { User } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   UserPlus, 
   Eye, 
@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 
 export function Register() {
-  const { state, dispatch } = useApp();
+  const { dispatch } = useApp();
+  const { signUp, loading } = useAuth();
   const [step, setStep] = useState(1); // 1: User Info, 2: Salon Info, 3: Success
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -207,31 +208,27 @@ export function Register() {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { error } = await signUp(
+        formData.email.toLowerCase(),
+        formData.password,
+        {
+          name: formData.name.trim(),
+          salonName: formData.salonName.trim(),
+        }
+      );
       
-      // Generate unique IDs
-      const userId = Date.now().toString();
-      const salonId = `salon-${Date.now()}`;
-      
-      // Create new user
-      const newUser: User = {
-        id: userId,
-        email: formData.email.toLowerCase(),
-        password: formData.password,
-        name: formData.name.trim(),
-        role: formData.role,
-        isActive: true,
-        salonId: salonId,
-        salonName: formData.salonName.trim(),
-        createdAt: new Date(),
-      };
-      
-      // Add user to state
-      dispatch({ type: 'SET_USERS', payload: [...state.users, newUser] });
-      
-      // Show success step
-      setStep(3);
+      if (error) {
+        if (error.message.includes('User already registered')) {
+          setErrors({ submit: 'Este email ya está registrado. Intenta iniciar sesión.' });
+        } else if (error.message.includes('Password should be at least')) {
+          setErrors({ submit: 'La contraseña debe tener al menos 6 caracteres.' });
+        } else {
+          setErrors({ submit: error.message || 'Error al crear la cuenta. Por favor intenta de nuevo.' });
+        }
+      } else {
+        // Show success step
+        setStep(3);
+      }
     } catch (error) {
       console.error('Error creating user:', error);
       setErrors({ submit: 'Error al crear la cuenta. Por favor intenta de nuevo.' });
@@ -262,7 +259,8 @@ export function Register() {
           
           <p className="text-gray-600 mb-6">
             Tu cuenta y salón "{formData.salonName}" han sido creados exitosamente. 
-            Ya puedes iniciar sesión y comenzar a gestionar tu negocio.
+            Hemos enviado un email de confirmación a tu dirección de correo. 
+            Por favor confirma tu email antes de iniciar sesión.
           </p>
           
           <div className="space-y-3 mb-8">
@@ -568,10 +566,10 @@ export function Register() {
             
             <button
               type="submit"
-              disabled={isSubmitting || (step === 1 ? !checkStep1Validity() : !checkStep2Validity())}
+              disabled={isSubmitting || loading || (step === 1 ? !checkStep1Validity() : !checkStep2Validity())}
               className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium disabled:bg-gray-300 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isSubmitting ? (
+              {isSubmitting || loading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   Creando...
