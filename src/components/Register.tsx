@@ -74,6 +74,8 @@ export function Register() {
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(value)) {
             errorMessage = 'Por favor ingresa un email válido';
+          } else if (value.length > 100) {
+            errorMessage = 'El email no puede exceder 100 caracteres';
           }
         }
         break;
@@ -207,29 +209,28 @@ export function Register() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    const { error } = await signUp(
-      formData.email.toLowerCase(),
-      formData.password,
-      {
-        name: formData.name.trim(),
-        salonName: formData.salonName.trim(),
-      }
-    );
-    
-    if (error) {
-      if (error.message.includes('User already registered')) {
-        setErrors({ submit: 'Este email ya está registrado. Intenta iniciar sesión.' });
-      } else if (error.message.includes('Password should be at least')) {
-        setErrors({ submit: 'La contraseña debe tener al menos 6 caracteres.' });
+    try {
+      const { error } = await signUp(
+        formData.email.toLowerCase(),
+        formData.password,
+        {
+          name: formData.name.trim(),
+          salonName: formData.salonName.trim(),
+        }
+      );
+      
+      if (error) {
+        setErrors({ submit: error.message });
       } else {
-        setErrors({ submit: error.message || 'Error al crear la cuenta. Por favor intenta de nuevo.' });
+        // Show success step
+        setStep(3);
       }
-    } else {
-      // Show success step
-      setStep(3);
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      setErrors({ submit: 'Error inesperado. Por favor intenta de nuevo.' });
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    setIsSubmitting(false);
   };
 
   const handleBackToLogin = () => {
