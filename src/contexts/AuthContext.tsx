@@ -1,9 +1,12 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useDataProvider } from './DataProviderContext';
+import { supabase } from '../lib/supabase';
 import { User } from '../types';
 
 interface AuthContextType {
+  signIn: (email: string, password: string) => Promise<{ user?: User; error?: { message: string } }>;
   signUp: (email: string, password: string, metadata?: { name?: string; salonName?: string }) => Promise<{ error?: { message: string } }>;
+  signOut: () => Promise<void>;
   loading: boolean;
 }
 
@@ -14,19 +17,44 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const { dataProvider } = useDataProvider();
+  const { dataProvider, isMock } = useDataProvider();
   const [loading, setLoading] = React.useState(false);
+
+  const signIn = async (email: string, password: string) => {
+    setLoading(true);
+    
+    try {
+      if (isMock) {
+        // Use mock authentication for demo mode
+        const user = await dataProvider.users.authenticate(email, password);
+        if (user) {
+          return { user };
+        } else {
+          return { error: { message: 'Email o contraseña incorrectos' } };
+        }
+      } else {
+        // Use Supabase authentication for normal mode
+        const user = await dataProvider.users.authenticate(email, password);
+        if (user) {
+          return { user };
+        } else {
+          return { error: { message: 'Email o contraseña incorrectos' } };
+        }
+      }
+    } catch (error: any) {
+      console.error('Error during sign in:', error);
+      return { error: { message: error.message || 'Error al iniciar sesión' } };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const signUp = async (email: string, password: string, metadata?: { name?: string; salonName?: string }) => {
     setLoading(true);
     
     try {
-      // Check if user already exists
-      const existingUsers = await dataProvider.users.getAll('');
-      const userExists = existingUsers.some(u => u.email.toLowerCase() === email.toLowerCase());
-      
-      if (userExists) {
-        return { error: { message: 'User already registered' } };
+      if (isMock) {
+        return { error: { message: 'El registro no está disponible en modo demo' } };
       }
 
       // Create new user
@@ -50,8 +78,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const signOut = async () => {
+    setLoading(true);
+    try {
+      if (!isMock) {
+        await supabase.auth.signOut();
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value: AuthContextType = {
+    signIn,
     signUp,
+    signOut,
     loading,
   };
 

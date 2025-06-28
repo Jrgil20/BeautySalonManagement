@@ -1,6 +1,7 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { DataProvider } from '../types';
 import { mockDataProvider } from '../services/mockDataProvider';
+import { supabaseDataProvider } from '../services/supabaseDataProvider';
 
 interface DataProviderContextType {
   dataProvider: DataProvider;
@@ -18,7 +19,7 @@ interface DataProviderProviderProps {
 export function DataProviderProvider({ children }: DataProviderProviderProps) {
   // Start in normal mode by default - demo mode only activated explicitly
   const [isMock, setIsMock] = React.useState(false);
-  const [dataProvider, setDataProvider] = React.useState<DataProvider>(mockDataProvider);
+  const [dataProvider, setDataProvider] = React.useState<DataProvider>(supabaseDataProvider);
 
   const switchToMock = () => {
     setIsMock(true);
@@ -26,15 +27,9 @@ export function DataProviderProvider({ children }: DataProviderProviderProps) {
   };
 
   const switchToDatabase = () => {
-    // In the future, here the Supabase provider would be initialized
-    // const supabaseProvider = new SupabaseDataProvider();
-    // setDataProvider(supabaseProvider);
+    // Use the Supabase data provider for real database operations
     setIsMock(false);
-    
-    // For now, show a message that it's not implemented but keep normal mode
-    console.warn('Database provider not implemented yet. Using mock data in normal mode.');
-    setIsMock(false);
-    setDataProvider(mockDataProvider);
+    setDataProvider(supabaseDataProvider);
   };
 
   const value: DataProviderContextType = {

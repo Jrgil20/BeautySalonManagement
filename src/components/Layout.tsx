@@ -1,5 +1,6 @@
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   LayoutDashboard, 
   Package, 
@@ -25,6 +26,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const { state, dispatch } = useApp();
+  const { signOut } = useAuth();
   const { notifications, unreadCount, markAsRead } = useNotifications();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
@@ -42,6 +44,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   const handleLogout = async () => {
+    await signOut();
     dispatch({ type: 'LOGOUT_USER' });
   };
 

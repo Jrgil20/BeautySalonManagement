@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { useDataProvider } from '../contexts/DataProviderContext';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   LogIn, 
   Eye, 
@@ -16,8 +17,9 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export function Login() {
-  const { state, dispatch, demoLogin } = useApp();
+  const { dispatch } = useApp();
   const { isMock } = useDataProvider();
+  const { signIn, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,16 +46,23 @@ export function Login() {
 
     try {
       if (isMock) {
-        // Use demo login for mock data
-        const success = await demoLogin(email, password);
-        if (success) {
+        // Use demo authentication for mock data
+        const { user, error } = await signIn(email, password);
+        if (user) {
+          dispatch({ type: 'LOGIN_USER', payload: user });
           dispatch({ type: 'SET_CURRENT_VIEW', payload: 'dashboard' });
         } else {
-          setError('Email o contraseña incorrectos');
+          setError(error?.message || 'Email o contraseña incorrectos');
         }
       } else {
-        // TODO: Implement Supabase authentication here
-        setError('Autenticación con Supabase no implementada aún');
+        // Use Supabase authentication for normal mode
+        const { user, error } = await signIn(email, password);
+        if (user) {
+          dispatch({ type: 'LOGIN_USER', payload: user });
+          dispatch({ type: 'SET_CURRENT_VIEW', payload: 'dashboard' });
+        } else {
+          setError(error?.message || 'Error al iniciar sesión');
+        }
       }
     } catch (err) {
       setError('Error inesperado. Por favor intenta de nuevo.');
@@ -127,10 +136,10 @@ export function Login() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || loading}
               className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 px-4 rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isSubmitting ? (
+              {isSubmitting || loading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
                   Iniciando sesión...
