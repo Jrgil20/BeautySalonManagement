@@ -101,21 +101,6 @@ export function LandingPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Bolt.new Badge */}
-              <a
-                href="https://bolt.new/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-10 h-10 hover:scale-110 transition-transform duration-200"
-                aria-label="Powered by Bolt.new"
-              >
-                <img
-                  src="/white_circle_360x360.png"
-                  alt="Powered by Bolt.new"
-                  className="w-8 h-8 drop-shadow-lg"
-                />
-              </a>
-              
               <button
                 onClick={handleGetStarted}
                 className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
@@ -180,6 +165,21 @@ export function LandingPage() {
         <div className="absolute top-20 left-10 w-20 h-20 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full opacity-20 animate-pulse" aria-hidden="true"></div>
         <div className="absolute bottom-20 right-10 w-32 h-32 bg-gradient-to-r from-purple-400 to-indigo-400 rounded-full opacity-20 animate-pulse delay-1000" aria-hidden="true"></div>
       </section>
+
+      {/* Floating Bolt.new Badge */}
+      <a
+        href="https://bolt.new/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-8 right-8 flex items-center justify-center w-20 h-20 hover:scale-110 transition-transform duration-200 z-50 drop-shadow-2xl"
+        aria-label="Powered by Bolt.new"
+      >
+        <img
+          src="/white_circle_360x360.png"
+          alt="Powered by Bolt.new"
+          className="w-16 h-16"
+        />
+      </a>
 
       {/* Stats Section */}
       <section className="py-16 bg-white/50 backdrop-blur-sm" aria-labelledby="stats-heading">
