@@ -100,9 +100,18 @@ export interface User {
   avatar?: string;
   isActive: boolean;
   salonId: string;
-  salonName: string;
   lastLogin?: Date;
   createdAt: Date;
+}
+
+export interface Salon {
+  id: string;
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ===== INTERFACES PARA SERVICIOS DE DATOS =====
@@ -143,6 +152,12 @@ export interface UserService extends DataService<User> {
   getBySalon(salonId: string): Promise<User[]>;
   updateLastLogin(id: string): Promise<User>;
   changePassword(id: string, newPassword: string): Promise<boolean>;
+}
+
+// Interfaz específica para salones
+export interface SalonService extends DataService<Salon> {
+  getByName(name: string): Promise<Salon[]>;
+  getActive(): Promise<Salon[]>;
 }
 
 // Interfaz para movimientos de inventario
@@ -264,6 +279,7 @@ export interface DataProvider {
   services: ServiceService;
   suppliers: SupplierService;
   users: UserService;
+  salons: SalonService;
   movements: MovementService;
   notifications: NotificationService;
   kpis: KPIService;

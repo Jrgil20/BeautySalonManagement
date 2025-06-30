@@ -13,6 +13,34 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface Database {
   public: {
     Tables: {
+      salons: {
+        Row: {
+          id_salon: string;
+          name: string;
+          address?: string;
+          phone?: string;
+          email?: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id_salon: string;
+          name: string;
+          address?: string;
+          phone?: string;
+          email?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id_salon?: string;
+          name?: string;
+          address?: string;
+          phone?: string;
+          email?: string;
+          updated_at?: string;
+        };
+      };
       users: {
         Row: {
           id: string;
@@ -22,7 +50,6 @@ export interface Database {
           avatar?: string;
           is_active: boolean;
           salon_id: string;
-          salon_name: string;
           last_login?: string;
           created_at: string;
           updated_at: string;
@@ -35,7 +62,6 @@ export interface Database {
           avatar?: string;
           is_active?: boolean;
           salon_id: string;
-          salon_name: string;
           last_login?: string;
           created_at?: string;
           updated_at?: string;
@@ -48,7 +74,6 @@ export interface Database {
           avatar?: string;
           is_active?: boolean;
           salon_id?: string;
-          salon_name?: string;
           last_login?: string;
           updated_at?: string;
         };
