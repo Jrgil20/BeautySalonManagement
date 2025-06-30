@@ -117,7 +117,7 @@ export function Dashboard() {
       </header>
 
       {/* Stats Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" aria-labelledby="stats-heading">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6" aria-labelledby="stats-heading">
         <h2 id="stats-heading" className="sr-only">Estadísticas principales</h2>
         <StatCard
           title="Total Productos"
@@ -151,12 +151,19 @@ export function Dashboard() {
           }}
         />
         <StatCard
-          title="Servicios Activos"
+          title="Total Servicios Activos"
           value={totalServices}
           icon={Scissors}
           trend="up"
           color="bg-gradient-to-r from-green-500 to-green-600"
           onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'services' })}
+        />
+        <StatCard
+          title="Servicios Realizados"
+          value={state.kpis.monthlyServicesCount}
+          icon={Scissors}
+          trend={state.kpis.monthlyServicesChangePercentage}
+          color="bg-gradient-to-r from-purple-500 to-indigo-600"
         />
       </section>
 

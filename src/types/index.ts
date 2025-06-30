@@ -85,6 +85,8 @@ export interface KPIData {
   previousMonthlyExpenses: number;
   revenueChangePercentage: number;
   expensesChangePercentage: number;
+  monthlyServicesCount: number;
+  monthlyServicesChangePercentage: number;
 }
 
 export type InventoryFilterType = 'all' | 'lowStock' | 'expiring';
@@ -161,6 +163,7 @@ export interface NotificationService extends DataService<Notification> {
 // Interfaz para KPIs y métricas
 export interface KPIService {
   getDashboardKPIs(salonId: string): Promise<KPIData>;
+  getMonthlyServicesCount(salonId: string, month: number, year: number): Promise<number>;
   getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number>;
   getMonthlyExpenses(salonId: string, month: number, year: number): Promise<number>;
   getProfitMargin(salonId: string, month: number, year: number): Promise<number>;

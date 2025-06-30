@@ -315,6 +315,14 @@ class MockNotificationService implements NotificationService {
 }
 
 class MockKPIService implements KPIService {
+  async getMonthlyServicesCount(salonId: string, month: number, year: number): Promise<number> {
+    // Mock data for services registered in the month
+    const services = mockServices.filter(s => s.salonId === salonId);
+    const baseCount = Math.floor(services.length / 3); // Simulate that 1/3 of services were registered this month
+    const variation = Math.floor(Math.sin(month) * 2); // Add some monthly variation
+    return Math.max(baseCount + variation, 0);
+  }
+
   async getDashboardKPIs(salonId: string): Promise<KPIData> {
     const products = mockProducts.filter(p => p.salonId === salonId);
     const services = mockServices.filter(s => s.salonId === salonId);
@@ -326,9 +334,22 @@ class MockKPIService implements KPIService {
     const previousMonthlyRevenue = 13500;
     const previousMonthlyExpenses = 7800;
     
+    // Mock data for services count
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+    
+    const monthlyServicesCount = await this.getMonthlyServicesCount(salonId, currentMonth, currentYear);
+    const previousMonthlyServicesCount = await this.getMonthlyServicesCount(salonId, previousMonth, previousYear);
+    
     // Calculate percentage changes
     const revenueChangePercentage = ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) * 100;
     const expensesChangePercentage = ((monthlyExpenses - previousMonthlyExpenses) / previousMonthlyExpenses) * 100;
+    const monthlyServicesChangePercentage = previousMonthlyServicesCount > 0 
+      ? ((monthlyServicesCount - previousMonthlyServicesCount) / previousMonthlyServicesCount) * 100 
+      : monthlyServicesCount > 0 ? 100 : 0;
     
     return {
       totalProducts: products.length,
@@ -346,6 +367,8 @@ class MockKPIService implements KPIService {
       previousMonthlyExpenses,
       revenueChangePercentage,
       expensesChangePercentage,
+      monthlyServicesCount,
+      monthlyServicesChangePercentage,
     };
   }
 

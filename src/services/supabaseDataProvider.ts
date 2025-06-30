@@ -594,6 +594,26 @@ class MockNotificationService implements NotificationService {
 }
 
 class MockKPIService implements KPIService {
+  async getMonthlyServicesCount(salonId: string, month: number, year: number): Promise<number> {
+    // Count services registered in the specified month and year
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+    
+    const { data, error } = await supabase
+      .from('services')
+      .select('id_service', { count: 'exact' })
+      .eq('salon_id', salonId)
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
+    
+    if (error) {
+      console.error('Error counting monthly services:', error);
+      return 0;
+    }
+    
+    return data?.length || 0;
+  }
+
   async getDashboardKPIs(salonId: string): Promise<KPIData> {
     const now = new Date();
     const currentMonth = now.getMonth() + 1;
@@ -606,6 +626,8 @@ class MockKPIService implements KPIService {
     const monthlyExpenses = await this.getMonthlyExpenses(salonId, currentMonth, currentYear);
     const previousMonthlyRevenue = await this.getMonthlyRevenue(salonId, previousMonth, previousYear);
     const previousMonthlyExpenses = await this.getMonthlyExpenses(salonId, previousMonth, previousYear);
+    const monthlyServicesCount = await this.getMonthlyServicesCount(salonId, currentMonth, currentYear);
+    const previousMonthlyServicesCount = await this.getMonthlyServicesCount(salonId, previousMonth, previousYear);
     
     // Calculate percentage changes
     const revenueChangePercentage = previousMonthlyRevenue > 0 
@@ -614,6 +636,9 @@ class MockKPIService implements KPIService {
     const expensesChangePercentage = previousMonthlyExpenses > 0 
       ? ((monthlyExpenses - previousMonthlyExpenses) / previousMonthlyExpenses) * 100 
       : 0;
+    const monthlyServicesChangePercentage = previousMonthlyServicesCount > 0 
+      ? ((monthlyServicesCount - previousMonthlyServicesCount) / previousMonthlyServicesCount) * 100 
+      : monthlyServicesCount > 0 ? 100 : 0;
     
     return {
       totalProducts: 0,
@@ -628,6 +653,8 @@ class MockKPIService implements KPIService {
       previousMonthlyExpenses,
       revenueChangePercentage,
       expensesChangePercentage,
+      monthlyServicesCount,
+      monthlyServicesChangePercentage,
     };
   }
 
