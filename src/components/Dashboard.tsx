@@ -18,7 +18,6 @@ export function Dashboard() {
 
   // Filter data by current user's salon
   const salonProducts = state.products.filter(p => p.salonId === state.currentUser?.salonId);
-  const salonServices = state.services.filter(s => s.salonId === state.currentUser?.salonId);
 
   // Calculate KPIs
   const totalProducts = salonProducts.length;
@@ -26,7 +25,6 @@ export function Dashboard() {
   const expiringItems = salonProducts.filter(p => 
     differenceInDays(p.expirationDate, new Date()) <= 30
   ).length;
-  const totalServices = salonServices.length;
 
   // Mock financial data
   const monthlyRevenue = 15000;
@@ -117,7 +115,7 @@ export function Dashboard() {
       </header>
 
       {/* Stats Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6" aria-labelledby="stats-heading">
+      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" aria-labelledby="stats-heading">
         <h2 id="stats-heading" className="sr-only">Estadísticas principales</h2>
         <StatCard
           title="Total Productos"
@@ -149,14 +147,6 @@ export function Dashboard() {
             dispatch({ type: 'SET_INVENTORY_FILTER', payload: 'expiring' });
             dispatch({ type: 'SET_CURRENT_VIEW', payload: 'inventory' });
           }}
-        />
-        <StatCard
-          title="Total Servicios Activos"
-          value={totalServices}
-          icon={Scissors}
-          trend="up"
-          color="bg-gradient-to-r from-green-500 to-green-600"
-          onClick={() => dispatch({ type: 'SET_CURRENT_VIEW', payload: 'services' })}
         />
         <StatCard
           title="Servicios Realizados"
