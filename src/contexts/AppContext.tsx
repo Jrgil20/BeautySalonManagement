@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { useDataProvider } from './DataProviderContext';
-import { Product, Service, Supplier, InventoryMovement, Notification, KPIData, User, InventoryFilterType } from '../types';
+import { Product, Service, Supplier, InventoryMovement, Notification, KPIData, User, Salon, InventoryFilterType } from '../types';
 
 interface AppState {
   products: Product[];
   services: Service[];
   suppliers: Supplier[];
   users: User[];
+  salons: Salon[];
   movements: InventoryMovement[];
   notifications: Notification[];
   kpis: KPIData;
@@ -28,6 +29,10 @@ type AppAction =
   | { type: 'ADD_SUPPLIER'; payload: Supplier }
   | { type: 'UPDATE_SUPPLIER'; payload: Supplier }
   | { type: 'DELETE_SUPPLIER'; payload: string }
+  | { type: 'SET_SALONS'; payload: Salon[] }
+  | { type: 'ADD_SALON'; payload: Salon }
+  | { type: 'UPDATE_SALON'; payload: Salon }
+  | { type: 'DELETE_SALON'; payload: string }
   | { type: 'SET_USERS'; payload: User[] }
   | { type: 'LOGIN_USER'; payload: User }
   | { type: 'LOGOUT_USER' }
@@ -46,6 +51,7 @@ const initialState: AppState = {
   services: [],
   suppliers: [],
   users: [],
+  salons: [],
   movements: [],
   notifications: [],
   kpis: {
@@ -107,6 +113,20 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         suppliers: state.suppliers.filter(s => s.id !== action.payload),
       };
+    case 'SET_SALONS':
+      return { ...state, salons: action.payload };
+    case 'ADD_SALON':
+      return { ...state, salons: [...state.salons, action.payload] };
+    case 'UPDATE_SALON':
+      return {
+        ...state,
+        salons: state.salons.map(s => s.id === action.payload.id ? action.payload : s),
+      };
+    case 'DELETE_SALON':
+      return {
+        ...state,
+        salons: state.salons.filter(s => s.id !== action.payload),
+      };
     case 'SET_USERS':
       return { ...state, users: action.payload };
     case 'LOGIN_USER':
@@ -159,6 +179,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             dataProvider.services.getAll(''),
             dataProvider.suppliers.getAll(''),
             dataProvider.users.getAll(''),
+            dataProvider.salons.getAll(''),
           ]);
           
           // Get all data regardless of salon for mock
@@ -186,10 +207,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
             dataProvider.users.getAll('salon-3'),
           ]);
           
+          const allSalons = await dataProvider.salons.getAll('');
+          
           dispatch({ type: 'SET_PRODUCTS', payload: allProducts.flat() });
           dispatch({ type: 'SET_SERVICES', payload: allServices.flat() });
           dispatch({ type: 'SET_SUPPLIERS', payload: allSuppliers.flat() });
           dispatch({ type: 'SET_USERS', payload: allUsers.flat() });
+          dispatch({ type: 'SET_SALONS', payload: allSalons });
         }
       } catch (error) {
         console.error('Error loading initial data:', error);

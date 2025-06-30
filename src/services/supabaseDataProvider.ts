@@ -5,6 +5,7 @@ import {
   ServiceService, 
   SupplierService, 
   UserService,
+  SalonService,
   MovementService,
   NotificationService,
   KPIService,
@@ -17,6 +18,7 @@ import {
   Service,
   Supplier,
   User,
+  Salon,
   InventoryMovement,
   Notification,
   KPIData,
@@ -38,9 +40,21 @@ function dbUserToUser(dbUser: Database['public']['Tables']['users']['Row']): Use
     avatar: dbUser.avatar,
     isActive: dbUser.is_active,
     salonId: dbUser.salon_id,
-    salonName: dbUser.salon_name,
     lastLogin: dbUser.last_login ? new Date(dbUser.last_login) : undefined,
     createdAt: new Date(dbUser.created_at),
+  };
+}
+
+// Helper function to convert database row to Salon type
+function dbSalonToSalon(dbSalon: Database['public']['Tables']['salons']['Row']): Salon {
+  return {
+    id: dbSalon.id_salon,
+    name: dbSalon.name,
+    address: dbSalon.address,
+    phone: dbSalon.phone,
+    email: dbSalon.email,
+    createdAt: new Date(dbSalon.created_at),
+    updatedAt: new Date(dbSalon.updated_at),
   };
 }
 
@@ -419,7 +433,6 @@ class SupabaseUserService implements UserService {
         avatar: user.avatar,
         is_active: user.isActive,
         salon_id: user.salonId,
-        salon_name: user.salonName,
         last_login: user.lastLogin?.toISOString(),
       })
       .select()
@@ -437,7 +450,6 @@ class SupabaseUserService implements UserService {
     if (user.role !== undefined) updateData.role = user.role;
     if (user.avatar !== undefined) updateData.avatar = user.avatar;
     if (user.isActive !== undefined) updateData.is_active = user.isActive;
-    if (user.salonName !== undefined) updateData.salon_name = user.salonName;
     if (user.lastLogin !== undefined) updateData.last_login = user.lastLogin.toISOString();
 
     const { data, error } = await supabase
@@ -480,6 +492,95 @@ class SupabaseUserService implements UserService {
 
     if (error) throw error;
     return data.map(dbUserToUser);
+  }
+}
+
+// Supabase implementation of SalonService
+class SupabaseSalonService implements SalonService {
+  async getAll(salonId: string): Promise<Salon[]> {
+    const { data, error } = await supabase
+      .from('salons')
+      .select('*');
+    
+    if (error) throw error;
+    return data.map(dbSalonToSalon);
+  }
+
+  async getById(id: string): Promise<Salon | null> {
+    const { data, error } = await supabase
+      .from('salons')
+      .select('*')
+      .eq('id_salon', id)
+      .single();
+    
+    if (error) {
+      if (error.code === 'PGRST116') return null;
+      throw error;
+    }
+    return dbSalonToSalon(data);
+  }
+
+  async create(data: Omit<Salon, 'createdAt' | 'updatedAt'>): Promise<Salon> {
+    const { data: result, error } = await supabase
+      .from('salons')
+      .insert({
+        id_salon: data.id,
+        name: data.name,
+        address: data.address,
+        phone: data.phone,
+        email: data.email,
+      })
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return dbSalonToSalon(result);
+  }
+
+  async update(id: string, data: Partial<Salon>): Promise<Salon> {
+    const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.email !== undefined) updateData.email = data.email;
+    
+    updateData.updated_at = new Date().toISOString();
+
+    const { data: result, error } = await supabase
+      .from('salons')
+      .update(updateData)
+      .eq('id_salon', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return dbSalonToSalon(result);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('salons')
+      .delete()
+      .eq('id_salon', id);
+    
+    if (error) throw error;
+    return true;
+  }
+
+  async getByName(name: string): Promise<Salon[]> {
+    const { data, error } = await supabase
+      .from('salons')
+      .select('*')
+      .ilike('name', `%${name}%`);
+    
+    if (error) throw error;
+    return data.map(dbSalonToSalon);
+  }
+
+  async getActive(): Promise<Salon[]> {
+    // For now, all salons are considered active
+    // This could be extended with an is_active column if needed
+    return this.getAll('');
   }
 }
 
@@ -653,6 +754,7 @@ export const supabaseDataProvider: DataProvider = {
   services: new SupabaseServiceService(),
   suppliers: new SupabaseSupplierService(),
   users: new SupabaseUserService(),
+  salons: new SupabaseSalonService(),
   movements: new MockMovementService(),
   notifications: new MockNotificationService(),
   kpis: new MockKPIService(),

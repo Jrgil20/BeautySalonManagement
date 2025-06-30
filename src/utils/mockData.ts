@@ -1,4 +1,35 @@
-import { Product, Service, Supplier, User } from '../types';
+import { Product, Service, Supplier, User, Salon } from '../types';
+
+// Mock Salons - Different salon types
+export const mockSalons: Salon[] = [
+  {
+    id: 'salon-1',
+    name: 'Glam Stock Central',
+    address: 'Calle Principal 123, Madrid, España',
+    phone: '+34 911 234 567',
+    email: 'info@glamstock.com',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'salon-2',
+    name: 'Estilo y Tijeras',
+    address: 'Avenida de la Belleza 456, Barcelona, España',
+    phone: '+34 933 456 789',
+    email: 'contacto@estiloytijeras.com',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+  },
+  {
+    id: 'salon-3',
+    name: 'Uñas Perfectas',
+    address: 'Plaza de las Uñas 789, Valencia, España',
+    phone: '+34 963 789 012',
+    email: 'info@unasperfectas.com',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+  },
+];
 
 // Mock Users - Different salon types with active accounts
 export const mockUsers: User[] = [
@@ -11,7 +42,6 @@ export const mockUsers: User[] = [
     role: 'admin',
     isActive: true,
     salonId: 'salon-1',
-    salonName: 'Glam Stock Central',
     lastLogin: new Date('2024-01-14'),
     createdAt: new Date('2024-01-01'),
   },
@@ -24,7 +54,6 @@ export const mockUsers: User[] = [
     role: 'manager',
     isActive: true,
     salonId: 'salon-1',
-    salonName: 'Glam Stock Central',
     lastLogin: new Date('2024-01-13'),
     createdAt: new Date('2024-01-01'),
   },
@@ -37,7 +66,6 @@ export const mockUsers: User[] = [
     role: 'employee',
     isActive: true,
     salonId: 'salon-1',
-    salonName: 'Glam Stock Central',
     lastLogin: new Date('2024-01-12'),
     createdAt: new Date('2024-01-01'),
   },
@@ -51,7 +79,6 @@ export const mockUsers: User[] = [
     role: 'admin',
     isActive: true,
     salonId: 'salon-2',
-    salonName: 'Estilo y Tijeras',
     lastLogin: new Date('2024-01-14'),
     createdAt: new Date('2024-01-01'),
   },
@@ -64,7 +91,6 @@ export const mockUsers: User[] = [
     role: 'manager',
     isActive: true,
     salonId: 'salon-2',
-    salonName: 'Estilo y Tijeras',
     lastLogin: new Date('2024-01-13'),
     createdAt: new Date('2024-01-01'),
   },
@@ -77,7 +103,6 @@ export const mockUsers: User[] = [
     role: 'employee',
     isActive: true,
     salonId: 'salon-2',
-    salonName: 'Estilo y Tijeras',
     lastLogin: new Date('2024-01-11'),
     createdAt: new Date('2024-01-01'),
   },
@@ -91,7 +116,6 @@ export const mockUsers: User[] = [
     role: 'admin',
     isActive: true,
     salonId: 'salon-3',
-    salonName: 'Uñas Perfectas',
     lastLogin: new Date('2024-01-14'),
     createdAt: new Date('2024-01-01'),
   },
@@ -104,7 +128,6 @@ export const mockUsers: User[] = [
     role: 'manager',
     isActive: true,
     salonId: 'salon-3',
-    salonName: 'Uñas Perfectas',
     lastLogin: new Date('2024-01-13'),
     createdAt: new Date('2024-01-01'),
   },
@@ -117,7 +140,6 @@ export const mockUsers: User[] = [
     role: 'employee',
     isActive: true,
     salonId: 'salon-3',
-    salonName: 'Uñas Perfectas',
     lastLogin: new Date('2024-01-10'),
     createdAt: new Date('2024-01-01'),
   },
@@ -131,7 +153,6 @@ export const mockUsers: User[] = [
     role: 'employee',
     isActive: false,
     salonId: 'salon-1',
-    salonName: 'Glam Stock Central',
     createdAt: new Date('2024-01-01'),
   },
 ];

@@ -151,6 +151,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Create user profile in our database
       const salonId = `salon-${Date.now()}`;
+      
+      // First create the salon
+      const { error: salonError } = await supabase
+        .from('salons')
+        .insert({
+          id_salon: salonId,
+          name: metadata?.salonName || 'New Salon',
+        });
+
+      if (salonError) {
+        console.error('Error creating salon:', salonError);
+        return { error: { message: `Error al crear el salón: ${salonError.message}` } };
+      }
+      
+      // Then create the user profile
       const { error: profileError } = await supabase
         .from('users')
         .insert({
@@ -160,7 +175,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           role: 'admin',
           is_active: true,
           salon_id: salonId,
-          salon_name: metadata?.salonName || 'New Salon',
         });
 
       if (profileError) {

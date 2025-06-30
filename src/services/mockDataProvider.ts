@@ -4,6 +4,7 @@ import {
   ServiceService, 
   SupplierService, 
   UserService,
+  SalonService,
   MovementService,
   NotificationService,
   KPIService,
@@ -16,6 +17,7 @@ import {
   Service,
   Supplier,
   User,
+  Salon,
   InventoryMovement,
   Notification,
   KPIData,
@@ -25,7 +27,7 @@ import {
   UserRole,
   AppConfig
 } from '../types';
-import { mockProducts, mockServices, mockSuppliers, mockUsers } from '../utils/mockData';
+import { mockProducts, mockServices, mockSuppliers, mockUsers, mockSalons } from '../utils/mockData';
 
 // Mock implementation of ProductService
 class MockProductService implements ProductService {
@@ -278,6 +280,57 @@ class MockUserService implements UserService {
   }
 }
 
+// Mock implementation of SalonService
+class MockSalonService implements SalonService {
+  private salons: Salon[] = [...mockSalons];
+
+  async getAll(salonId: string): Promise<Salon[]> {
+    return this.salons;
+  }
+
+  async getById(id: string): Promise<Salon | null> {
+    return this.salons.find(s => s.id === id) || null;
+  }
+
+  async create(data: Omit<Salon, 'createdAt' | 'updatedAt'>): Promise<Salon> {
+    const salon: Salon = {
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.salons.push(salon);
+    return salon;
+  }
+
+  async update(id: string, data: Partial<Salon>): Promise<Salon> {
+    const index = this.salons.findIndex(s => s.id === id);
+    if (index === -1) throw new Error('Salon not found');
+    
+    this.salons[index] = {
+      ...this.salons[index],
+      ...data,
+      updatedAt: new Date(),
+    };
+    return this.salons[index];
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const index = this.salons.findIndex(s => s.id === id);
+    if (index === -1) return false;
+    
+    this.salons.splice(index, 1);
+    return true;
+  }
+
+  async getByName(name: string): Promise<Salon[]> {
+    return this.salons.filter(s => s.name.toLowerCase().includes(name.toLowerCase()));
+  }
+
+  async getActive(): Promise<Salon[]> {
+    return this.salons; // All mock salons are considered active
+  }
+}
+
 // Mock implementations for other services (simplified)
 class MockMovementService implements MovementService {
   private movements: InventoryMovement[] = [];
@@ -445,6 +498,7 @@ export const mockDataProvider: DataProvider = {
   services: new MockServiceService(),
   suppliers: new MockSupplierService(),
   users: new MockUserService(),
+  salons: new MockSalonService(),
   movements: new MockMovementService(),
   notifications: new MockNotificationService(),
   kpis: new MockKPIService(),

@@ -27,6 +27,11 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const { state, dispatch } = useApp();
   const { signOut } = useAuth();
+  
+  // Get salon name from salons data
+  const currentSalon = state.salons.find(s => s.id === state.currentUser?.salonId);
+  const salonName = currentSalon?.name || state.currentUser?.salonId || 'Glam Stock';
+  
   const { notifications, unreadCount, markAsRead } = useNotifications();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [notificationsOpen, setNotificationsOpen] = React.useState(false);
@@ -130,7 +135,7 @@ export function Layout({ children }: LayoutProps) {
         {/* Sidebar Header */}
         <header className="flex items-center justify-between h-16 px-6 border-b border-gray-200 flex-shrink-0">
           <h1 className="text-xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-            {state.currentUser?.salonName || 'Glam Stock'}
+            {salonName}
           </h1>
           <button
             onClick={() => setSidebarOpen(false)}
