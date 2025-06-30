@@ -242,10 +242,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
           dispatch({ type: 'SET_SUPPLIERS', payload: suppliers });
         }
         
+        // Always load KPIs (both mock and real mode)
         const kpis = await dataProvider.kpis.getDashboardKPIs(state.currentUser.salonId);
         dispatch({ type: 'UPDATE_KPIS', payload: kpis });
       } catch (error) {
         console.error('Error loading salon data:', error);
+        // Set default KPIs if there's an error
+        dispatch({ type: 'UPDATE_KPIS', payload: {
+          totalProducts: 0,
+          lowStockItems: 0,
+          expiringItems: 0,
+          totalServices: 0,
+          totalSuppliers: 0,
+          monthlyExpenses: 0,
+          monthlyRevenue: 0,
+          profitMargin: 0,
+          previousMonthlyRevenue: 0,
+          previousMonthlyExpenses: 0,
+          revenueChangePercentage: 0,
+          expensesChangePercentage: 0,
+          monthlyServicesCount: 0,
+          monthlyServicesChangePercentage: 0,
+        }});
       }
     };
     

@@ -630,27 +630,122 @@ class MockNotificationService implements NotificationService {
 }
 
 class MockKPIService implements KPIService {
+  async getMonthlyServicesCount(salonId: string, month: number, year: number): Promise<number> {
+    // Mock data for services count - simulate services performed in the month
+    // In a real implementation, this would query a services_performed or appointments table
+    const services = await supabase
+      .from('services')
+      .select('*')
+      .eq('salon_id', salonId)
+      .eq('is_active', true);
+    
+    if (services.error) return 0;
+    
+    // Simulate that each active service was performed multiple times during the month
+    const baseCount = services.data.length * 8; // Each service performed ~8 times per month
+    const variation = Math.floor(Math.sin(month) * 5); // Add monthly variation
+    return Math.max(baseCount + variation, 0);
+  }
+
   async getDashboardKPIs(): Promise<KPIData> {
-    return {
-      totalRevenue: 0,
-      totalServices: 0,
-      totalProducts: 0,
-      lowStockItems: 0,
-      expiringItems: 0,
-      activeUsers: 0,
-    };
+    try {
+      // Get actual data from database
+      const [products, services, suppliers] = await Promise.all([
+        supabase.from('products').select('*').eq('salon_id', salonId),
+        supabase.from('services').select('*').eq('salon_id', salonId),
+        supabase.from('suppliers').select('*').eq('salon_id', salonId),
+      ]);
+
+      const salonProducts = products.data || [];
+      const salonServices = services.data || [];
+      const salonSuppliers = suppliers.data || [];
+
+      // Calculate low stock and expiring items
+      const lowStockItems = salonProducts.filter(p => p.stock <= p.min_stock).length;
+      const expiringItems = salonProducts.filter(p => {
+        const days = Math.ceil((new Date(p.expiration_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+        return days <= 30;
+      }).length;
+
+      // Mock data for current and previous month
+      const monthlyRevenue = 15000;
+      const monthlyExpenses = 8500;
+      const previousMonthlyRevenue = 13500;
+      const previousMonthlyExpenses = 7800;
+      
+      // Calculate services count for current and previous month
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+      const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+      
+      const monthlyServicesCount = await this.getMonthlyServicesCount(salonId, currentMonth, currentYear);
+      const previousMonthlyServicesCount = await this.getMonthlyServicesCount(salonId, previousMonth, previousYear);
+      
+      // Calculate percentage changes
+      const revenueChangePercentage = ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) * 100;
+      const expensesChangePercentage = ((monthlyExpenses - previousMonthlyExpenses) / previousMonthlyExpenses) * 100;
+      const monthlyServicesChangePercentage = previousMonthlyServicesCount > 0 
+        ? ((monthlyServicesCount - previousMonthlyServicesCount) / previousMonthlyServicesCount) * 100 
+        : monthlyServicesCount > 0 ? 100 : 0;
+      
+      return {
+        totalProducts: salonProducts.length,
+        lowStockItems,
+        expiringItems,
+        totalServices: salonServices.length,
+        totalSuppliers: salonSuppliers.length,
+        monthlyExpenses,
+        monthlyRevenue,
+        profitMargin: 43.3,
+        previousMonthlyRevenue,
+        previousMonthlyExpenses,
+        revenueChangePercentage,
+        expensesChangePercentage,
+        monthlyServicesCount,
+        monthlyServicesChangePercentage,
+      };
+    } catch (error) {
+      console.error('Error calculating KPIs:', error);
+      // Return default values if there's an error
+      return {
+        totalProducts: 0,
+        lowStockItems: 0,
+        expiringItems: 0,
+        totalServices: 0,
+        totalSuppliers: 0,
+        monthlyExpenses: 0,
+        monthlyRevenue: 0,
+        profitMargin: 0,
+        previousMonthlyRevenue: 0,
+        previousMonthlyExpenses: 0,
+        revenueChangePercentage: 0,
+        expensesChangePercentage: 0,
+        monthlyServicesCount: 0,
+        monthlyServicesChangePercentage: 0,
+      };
+    }
   }
 
-  async getRevenueByPeriod(startDate: Date, endDate: Date): Promise<number> {
-    return 0;
+  async getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number> {
+    // Mock implementation - in real app this would query actual revenue data
+    const baseRevenue = 15000;
+    const variation = Math.sin(month) * 2000;
+    return Math.max(baseRevenue + variation, 5000);
   }
 
-  async getTopServices(limit: number): Promise<Array<{ service: Service; count: number }>> {
-    return [];
+  async getMonthlyExpenses(salonId: string, month: number, year: number): Promise<number> {
+    // Mock implementation - in real app this would query actual expense data
+    const baseExpenses = 8500;
+    const variation = Math.sin(month + 1) * 1000;
+    return Math.max(baseExpenses + variation, 3000);
   }
 
-  async getTopProducts(limit: number): Promise<Array<{ product: Product; usage: number }>> {
-    return [];
+  async getProfitMargin(salonId: string, month: number, year: number): Promise<number> {
+    const revenue = await this.getMonthlyRevenue(salonId, month, year);
+    const expenses = await this.getMonthlyExpenses(salonId, month, year);
+    return ((revenue - expenses) / revenue) * 100;
   }
 }
 
