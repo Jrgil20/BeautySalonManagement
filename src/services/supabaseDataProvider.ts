@@ -695,23 +695,6 @@ class MockNotificationService implements NotificationService {
 }
 
 class MockKPIService implements KPIService {
-  async getMonthlyServicesCount(salonId: string, month: number, year: number): Promise<number> {
-    // Mock data for services count - simulate services performed in the month
-    // In a real implementation, this would query a services_performed or appointments table
-    const { data: services } = await supabase
-      .from('services')
-      .select('*')
-      .eq('salon_id', salonId)
-      .eq('is_active', true);
-    
-    if (!services) return 0;
-    
-    // Simulate that each active service was performed multiple times during the month
-    const baseCount = services.length * 8; // Each service performed ~8 times per month
-    const variation = Math.floor(Math.sin(month) * 5); // Add monthly variation
-    return Math.max(baseCount + variation, 0);
-  }
-
   async getDashboardKPIs(salonId: string): Promise<KPIData> {
     try {
       // Get actual data from database
@@ -738,22 +721,9 @@ class MockKPIService implements KPIService {
       const previousMonthlyRevenue = 13500;
       const previousMonthlyExpenses = 7800;
       
-      // Calculate services count for current and previous month
-      const now = new Date();
-      const currentMonth = now.getMonth() + 1;
-      const currentYear = now.getFullYear();
-      const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
-      const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
-      
-      const monthlyServicesCount = await this.getMonthlyServicesCount(salonId, currentMonth, currentYear);
-      const previousMonthlyServicesCount = await this.getMonthlyServicesCount(salonId, previousMonth, previousYear);
-      
       // Calculate percentage changes
       const revenueChangePercentage = ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) * 100;
       const expensesChangePercentage = ((monthlyExpenses - previousMonthlyExpenses) / previousMonthlyExpenses) * 100;
-      const monthlyServicesChangePercentage = previousMonthlyServicesCount > 0 
-        ? ((monthlyServicesCount - previousMonthlyServicesCount) / previousMonthlyServicesCount) * 100 
-        : monthlyServicesCount > 0 ? 100 : 0;
       
       return {
         totalProducts: salonProducts.length,
@@ -768,8 +738,6 @@ class MockKPIService implements KPIService {
         previousMonthlyExpenses,
         revenueChangePercentage,
         expensesChangePercentage,
-        monthlyServicesCount,
-        monthlyServicesChangePercentage,
       };
     } catch (error) {
       console.error('Error calculating KPIs:', error);
@@ -787,8 +755,6 @@ class MockKPIService implements KPIService {
         previousMonthlyExpenses: 0,
         revenueChangePercentage: 0,
         expensesChangePercentage: 0,
-        monthlyServicesCount: 0,
-        monthlyServicesChangePercentage: 0,
       };
     }
   }

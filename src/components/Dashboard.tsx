@@ -149,10 +149,9 @@ export function Dashboard() {
           }}
         />
         <StatCard
-          title="Servicios Realizados"
-          value={state.kpis.monthlyServicesCount}
+          title="Servicios Activos"
+          value={state.kpis.totalServices}
           icon={Scissors}
-          trend={state.kpis.monthlyServicesChangePercentage}
           color="bg-gradient-to-r from-purple-500 to-indigo-600"
         />
       </section>

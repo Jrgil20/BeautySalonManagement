@@ -85,8 +85,6 @@ export interface KPIData {
   previousMonthlyExpenses: number;
   revenueChangePercentage: number;
   expensesChangePercentage: number;
-  monthlyServicesCount: number;
-  monthlyServicesChangePercentage: number;
 }
 
 export type InventoryFilterType = 'all' | 'lowStock' | 'expiring';

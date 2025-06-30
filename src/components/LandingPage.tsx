@@ -100,13 +100,30 @@ export function LandingPage() {
                 Glam Stock
               </h1>
             </div>
-            <button
-              onClick={handleGetStarted}
-              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
-            >
-              Iniciar Sesión
-              <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
-            </button>
+            <div className="flex items-center space-x-4">
+              {/* Bolt.new Badge */}
+              <a
+                href="https://bolt.new/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center w-10 h-10 hover:scale-110 transition-transform duration-200"
+                aria-label="Powered by Bolt.new"
+              >
+                <img
+                  src="/white_circle_360x360.png"
+                  alt="Powered by Bolt.new"
+                  className="w-8 h-8 drop-shadow-lg"
+                />
+              </a>
+              
+              <button
+                onClick={handleGetStarted}
+                className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-lg hover:from-pink-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                Iniciar Sesión
+                <ArrowRight className="w-4 h-4 ml-2" aria-hidden="true" />
+              </button>
+            </div>
           </div>
         </div>
       </header>
