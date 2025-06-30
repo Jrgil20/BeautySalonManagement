@@ -111,14 +111,14 @@ function dbSupplierToSupplier(dbSupplier: Database['public']['Tables']['supplier
   };
 }
 
-// Supabase Product Service Implementation
+// Supabase implementation of ProductService
 class SupabaseProductService implements ProductService {
-  async getAll(): Promise<Product[]> {
+  async getAll(salonId: string): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .order('created_at', { ascending: false });
-
+      .eq('salon_id', salonId);
+    
     if (error) throw error;
     return data.map(dbProductToProduct);
   }
@@ -129,7 +129,7 @@ class SupabaseProductService implements ProductService {
       .select('*')
       .eq('id_product', id)
       .single();
-
+    
     if (error) {
       if (error.code === 'PGRST116') return null; // Not found
       throw error;
@@ -137,95 +137,123 @@ class SupabaseProductService implements ProductService {
     return dbProductToProduct(data);
   }
 
-  async create(product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
-    const { data, error } = await supabase
+  async create(data: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> {
+    const { data: result, error } = await supabase
       .from('products')
       .insert({
-        name_product: product.name,
-        brand: product.brand,
-        category: product.category,
-        stock: product.stock,
-        min_stock: product.minStock,
-        unit: product.unit,
-        unit_price: product.unitPrice,
-        expiration_date: product.expirationDate.toISOString().split('T')[0],
-        supplier_id: product.supplierId,
-        salon_id: product.salonId,
+        name_product: data.name,
+        brand: data.brand,
+        category: data.category,
+        stock: data.stock,
+        min_stock: data.minStock,
+        unit: data.unit,
+        unit_price: data.unitPrice,
+        expiration_date: data.expirationDate.toISOString(),
+        supplier_id: data.supplierId,
+        salon_id: data.salonId,
       })
       .select()
       .single();
-
+    
     if (error) throw error;
-    return dbProductToProduct(data);
+    return dbProductToProduct(result);
   }
 
-  async update(id: string, product: Partial<Omit<Product, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Product> {
+  async update(id: string, data: Partial<Product>): Promise<Product> {
     const updateData: any = {};
+    if (data.name !== undefined) updateData.name_product = data.name;
+    if (data.brand !== undefined) updateData.brand = data.brand;
+    if (data.category !== undefined) updateData.category = data.category;
+    if (data.stock !== undefined) updateData.stock = data.stock;
+    if (data.minStock !== undefined) updateData.min_stock = data.minStock;
+    if (data.unit !== undefined) updateData.unit = data.unit;
+    if (data.unitPrice !== undefined) updateData.unit_price = data.unitPrice;
+    if (data.expirationDate !== undefined) updateData.expiration_date = data.expirationDate.toISOString();
+    if (data.supplierId !== undefined) updateData.supplier_id = data.supplierId;
     
-    if (product.name !== undefined) updateData.name_product = product.name;
-    if (product.brand !== undefined) updateData.brand = product.brand;
-    if (product.category !== undefined) updateData.category = product.category;
-    if (product.stock !== undefined) updateData.stock = product.stock;
-    if (product.minStock !== undefined) updateData.min_stock = product.minStock;
-    if (product.unit !== undefined) updateData.unit = product.unit;
-    if (product.unitPrice !== undefined) updateData.unit_price = product.unitPrice;
-    if (product.expirationDate !== undefined) updateData.expiration_date = product.expirationDate.toISOString().split('T')[0];
-    if (product.supplierId !== undefined) updateData.supplier_id = product.supplierId;
+    updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data: result, error } = await supabase
       .from('products')
       .update(updateData)
       .eq('id_product', id)
       .select()
       .single();
-
+    
     if (error) throw error;
-    return dbProductToProduct(data);
+    return dbProductToProduct(result);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<boolean> {
     const { error } = await supabase
       .from('products')
       .delete()
       .eq('id_product', id);
-
+    
     if (error) throw error;
+    return true;
   }
 
-  async getLowStock(): Promise<Product[]> {
+  async getByCategory(category: string, salonId: string): Promise<Product[]> {
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .filter('stock', 'lte', 'min_stock')
-      .order('stock', { ascending: true });
-
+      .eq('salon_id', salonId)
+      .eq('category', category);
+    
     if (error) throw error;
     return data.map(dbProductToProduct);
   }
 
-  async getExpiringSoon(days: number = 30): Promise<Product[]> {
+  async getLowStock(salonId: string): Promise<Product[]> {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('salon_id', salonId)
+      .filter('stock', 'lte', 'min_stock');
+    
+    if (error) throw error;
+    return data.map(dbProductToProduct);
+  }
+
+  async getExpiringSoon(days: number, salonId: string): Promise<Product[]> {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + days);
-
+    
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .lte('expiration_date', futureDate.toISOString().split('T')[0])
-      .order('expiration_date', { ascending: true });
-
+      .eq('salon_id', salonId)
+      .lte('expiration_date', futureDate.toISOString());
+    
     if (error) throw error;
     return data.map(dbProductToProduct);
+  }
+
+  async updateStock(id: string, quantity: number): Promise<Product> {
+    const { data, error } = await supabase
+      .from('products')
+      .update({ 
+        stock: quantity,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id_product', id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    return dbProductToProduct(data);
   }
 }
 
-// Supabase Service Service Implementation
+// Supabase implementation of ServiceService
 class SupabaseServiceService implements ServiceService {
-  async getAll(): Promise<Service[]> {
+  async getAll(salonId: string): Promise<Service[]> {
     const { data, error } = await supabase
       .from('services')
       .select('*')
-      .order('created_at', { ascending: false });
-
+      .eq('salon_id', salonId);
+    
     if (error) throw error;
     return data.map(dbServiceToService);
   }
@@ -236,98 +264,111 @@ class SupabaseServiceService implements ServiceService {
       .select('*')
       .eq('id_service', id)
       .single();
-
+    
     if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
+      if (error.code === 'PGRST116') return null;
       throw error;
     }
     return dbServiceToService(data);
   }
 
-  async create(service: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>): Promise<Service> {
-    const { data, error } = await supabase
+  async create(data: Omit<Service, 'id' | 'createdAt' | 'updatedAt'>): Promise<Service> {
+    const { data: result, error } = await supabase
       .from('services')
       .insert({
-        name_service: service.name,
-        description: service.description,
-        price: service.price,
-        duration: service.duration,
-        category: service.category,
-        products: service.products,
-        labor_rate: service.laborRate,
-        is_active: service.isActive,
-        salon_id: service.salonId,
+        name_service: data.name,
+        description: data.description,
+        price: data.price,
+        duration: data.duration,
+        category: data.category,
+        products: data.products,
+        labor_rate: data.laborRate,
+        is_active: data.isActive,
+        salon_id: data.salonId,
       })
       .select()
       .single();
-
+    
     if (error) throw error;
-    return dbServiceToService(data);
+    return dbServiceToService(result);
   }
 
-  async update(id: string, service: Partial<Omit<Service, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Service> {
+  async update(id: string, data: Partial<Service>): Promise<Service> {
     const updateData: any = {};
+    if (data.name !== undefined) updateData.name_service = data.name;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.price !== undefined) updateData.price = data.price;
+    if (data.duration !== undefined) updateData.duration = data.duration;
+    if (data.category !== undefined) updateData.category = data.category;
+    if (data.products !== undefined) updateData.products = data.products;
+    if (data.laborRate !== undefined) updateData.labor_rate = data.laborRate;
+    if (data.isActive !== undefined) updateData.is_active = data.isActive;
     
-    if (service.name !== undefined) updateData.name_service = service.name;
-    if (service.description !== undefined) updateData.description = service.description;
-    if (service.price !== undefined) updateData.price = service.price;
-    if (service.duration !== undefined) updateData.duration = service.duration;
-    if (service.category !== undefined) updateData.category = service.category;
-    if (service.products !== undefined) updateData.products = service.products;
-    if (service.laborRate !== undefined) updateData.labor_rate = service.laborRate;
-    if (service.isActive !== undefined) updateData.is_active = service.isActive;
+    updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data: result, error } = await supabase
       .from('services')
       .update(updateData)
       .eq('id_service', id)
       .select()
       .single();
-
+    
     if (error) throw error;
-    return dbServiceToService(data);
+    return dbServiceToService(result);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<boolean> {
     const { error } = await supabase
       .from('services')
       .delete()
       .eq('id_service', id);
-
+    
     if (error) throw error;
+    return true;
   }
 
-  async getActive(): Promise<Service[]> {
+  async getByCategory(category: string, salonId: string): Promise<Service[]> {
     const { data, error } = await supabase
       .from('services')
       .select('*')
-      .eq('is_active', true)
-      .order('name_service', { ascending: true });
-
+      .eq('salon_id', salonId)
+      .eq('category', category);
+    
     if (error) throw error;
     return data.map(dbServiceToService);
   }
 
-  async getByCategory(category: string): Promise<Service[]> {
+  async getActive(salonId: string): Promise<Service[]> {
     const { data, error } = await supabase
       .from('services')
       .select('*')
-      .eq('category', category)
-      .order('name_service', { ascending: true });
-
+      .eq('salon_id', salonId)
+      .eq('is_active', true);
+    
     if (error) throw error;
     return data.map(dbServiceToService);
+  }
+
+  async calculateProfitMargin(serviceId: string): Promise<number> {
+    const service = await this.getById(serviceId);
+    if (!service) return 0;
+    
+    const productsCost = service.products.reduce((total, product) => total + product.cost, 0);
+    const laborCost = (service.duration / 60) * (service.laborRate || 25);
+    const totalCost = productsCost + laborCost;
+    
+    return ((service.price - totalCost) / service.price) * 100;
   }
 }
 
-// Supabase Supplier Service Implementation
+// Supabase implementation of SupplierService
 class SupabaseSupplierService implements SupplierService {
-  async getAll(): Promise<Supplier[]> {
+  async getAll(salonId: string): Promise<Supplier[]> {
     const { data, error } = await supabase
       .from('suppliers')
       .select('*')
-      .order('created_at', { ascending: false });
-
+      .eq('salon_id', salonId);
+    
     if (error) throw error;
     return data.map(dbSupplierToSupplier);
   }
@@ -338,72 +379,97 @@ class SupabaseSupplierService implements SupplierService {
       .select('*')
       .eq('id_supplier', id)
       .single();
-
+    
     if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
+      if (error.code === 'PGRST116') return null;
       throw error;
     }
     return dbSupplierToSupplier(data);
   }
 
-  async create(supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>): Promise<Supplier> {
-    const { data, error } = await supabase
+  async create(data: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>): Promise<Supplier> {
+    const { data: result, error } = await supabase
       .from('suppliers')
       .insert({
-        name_supplier: supplier.name,
-        contact_person: supplier.contactPerson,
-        email: supplier.email,
-        phone: supplier.phone,
-        address: supplier.address,
-        products: supplier.products,
-        salon_id: supplier.salonId,
+        name_supplier: data.name,
+        contact_person: data.contactPerson,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        products: data.products,
+        salon_id: data.salonId,
       })
       .select()
       .single();
-
+    
     if (error) throw error;
-    return dbSupplierToSupplier(data);
+    return dbSupplierToSupplier(result);
   }
 
-  async update(id: string, supplier: Partial<Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>>): Promise<Supplier> {
+  async update(id: string, data: Partial<Supplier>): Promise<Supplier> {
     const updateData: any = {};
+    if (data.name !== undefined) updateData.name_supplier = data.name;
+    if (data.contactPerson !== undefined) updateData.contact_person = data.contactPerson;
+    if (data.email !== undefined) updateData.email = data.email;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.address !== undefined) updateData.address = data.address;
+    if (data.products !== undefined) updateData.products = data.products;
     
-    if (supplier.name !== undefined) updateData.name_supplier = supplier.name;
-    if (supplier.contactPerson !== undefined) updateData.contact_person = supplier.contactPerson;
-    if (supplier.email !== undefined) updateData.email = supplier.email;
-    if (supplier.phone !== undefined) updateData.phone = supplier.phone;
-    if (supplier.address !== undefined) updateData.address = supplier.address;
-    if (supplier.products !== undefined) updateData.products = supplier.products;
+    updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data: result, error } = await supabase
       .from('suppliers')
       .update(updateData)
       .eq('id_supplier', id)
       .select()
       .single();
-
+    
     if (error) throw error;
-    return dbSupplierToSupplier(data);
+    return dbSupplierToSupplier(result);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<boolean> {
     const { error } = await supabase
       .from('suppliers')
       .delete()
       .eq('id_supplier', id);
-
+    
     if (error) throw error;
+    return true;
+  }
+
+  async getByProduct(productId: string): Promise<Supplier[]> {
+    const { data, error } = await supabase
+      .from('suppliers')
+      .select('*')
+      .contains('products', [productId]);
+    
+    if (error) throw error;
+    return data.map(dbSupplierToSupplier);
+  }
+
+  async getProducts(supplierId: string): Promise<Product[]> {
+    const supplier = await this.getById(supplierId);
+    if (!supplier) return [];
+    
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .in('id_product', supplier.products);
+    
+    if (error) throw error;
+    return data.map(dbProductToProduct);
   }
 }
 
-// Supabase User Service Implementation
+// Supabase implementation of UserService
 class SupabaseUserService implements UserService {
-  async getAll(): Promise<User[]> {
+  async getAll(salonId: string): Promise<User[]> {
     const { data, error } = await supabase
       .from('users')
       .select('*')
-      .order('created_at', { ascending: false });
-
+      .eq('salon_id', salonId);
+    
     if (error) throw error;
     return data.map(dbUserToUser);
   }
@@ -414,84 +480,104 @@ class SupabaseUserService implements UserService {
       .select('*')
       .eq('id', id)
       .single();
-
+    
     if (error) {
-      if (error.code === 'PGRST116') return null; // Not found
+      if (error.code === 'PGRST116') return null;
       throw error;
     }
     return dbUserToUser(data);
   }
 
-  async create(user: Omit<User, 'id' | 'createdAt'>): Promise<User> {
-    const { data, error } = await supabase
+  async create(data: Omit<User, 'createdAt' | 'updatedAt'>): Promise<User> {
+    // Create the user profile in our database
+    const { data: result, error } = await supabase
       .from('users')
       .insert({
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        avatar: user.avatar,
-        is_active: user.isActive,
-        salon_id: user.salonId,
-        last_login: user.lastLogin?.toISOString(),
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+        avatar: data.avatar,
+        is_active: data.isActive,
+        salon_id: data.salonId,
       })
       .select()
       .single();
-
+    
     if (error) throw error;
-    return dbUserToUser(data);
+    return dbUserToUser(result);
   }
 
-  async update(id: string, user: Partial<Omit<User, 'id' | 'createdAt'>>): Promise<User> {
+  async update(id: string, data: Partial<User>): Promise<User> {
     const updateData: any = {};
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.role !== undefined) updateData.role = data.role;
+    if (data.avatar !== undefined) updateData.avatar = data.avatar;
+    if (data.isActive !== undefined) updateData.is_active = data.isActive;
+    if (data.lastLogin !== undefined) updateData.last_login = data.lastLogin.toISOString();
     
-    if (user.email !== undefined) updateData.email = user.email;
-    if (user.name !== undefined) updateData.name = user.name;
-    if (user.role !== undefined) updateData.role = user.role;
-    if (user.avatar !== undefined) updateData.avatar = user.avatar;
-    if (user.isActive !== undefined) updateData.is_active = user.isActive;
-    if (user.lastLogin !== undefined) updateData.last_login = user.lastLogin.toISOString();
+    updateData.updated_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data: result, error } = await supabase
       .from('users')
       .update(updateData)
       .eq('id', id)
       .select()
       .single();
-
+    
     if (error) throw error;
-    return dbUserToUser(data);
+    return dbUserToUser(result);
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string): Promise<boolean> {
     const { error } = await supabase
       .from('users')
       .delete()
       .eq('id', id);
-
+    
     if (error) throw error;
+    return true;
   }
 
-  async getByRole(role: string): Promise<User[]> {
-    const { data, error } = await supabase
+  async authenticate(email: string, password: string): Promise<User | null> {
+    // This method is now handled in AuthContext for better error handling
+    // We'll keep it simple here for compatibility
+    const { data: userProfile } = await supabase
       .from('users')
       .select('*')
-      .eq('role', role)
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data.map(dbUserToUser);
-  }
-
-  async getActive(): Promise<User[]> {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
+      .eq('email', email.toLowerCase())
       .eq('is_active', true)
-      .order('name', { ascending: true });
+      .maybeSingle();
 
+    return userProfile ? dbUserToUser(userProfile) : null;
+  }
+
+  async getBySalon(salonId: string): Promise<User[]> {
+    return this.getAll(salonId);
+  }
+
+  async updateLastLogin(id: string): Promise<User> {
+    const { data, error } = await supabase
+      .from('users')
+      .update({ 
+        last_login: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .select()
+      .single();
+    
     if (error) throw error;
-    return data.map(dbUserToUser);
+    return dbUserToUser(data);
+  }
+
+  async changePassword(id: string, newPassword: string): Promise<boolean> {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword
+    });
+    
+    if (error) throw error;
+    return true;
   }
 }
 
@@ -584,70 +670,49 @@ class SupabaseSalonService implements SalonService {
   }
 }
 
-// Mock implementations for services not yet implemented with Supabase
+// Mock implementations for other services (to be implemented later)
 class MockMovementService implements MovementService {
-  async getAll(): Promise<InventoryMovement[]> {
-    return [];
-  }
-
-  async getById(id: string): Promise<InventoryMovement | null> {
-    return null;
-  }
-
-  async create(movement: Omit<InventoryMovement, 'id' | 'createdAt'>): Promise<InventoryMovement> {
-    throw new Error('Not implemented');
-  }
-
-  async getByProduct(productId: string): Promise<InventoryMovement[]> {
-    return [];
-  }
-
-  async getByDateRange(startDate: Date, endDate: Date): Promise<InventoryMovement[]> {
-    return [];
-  }
+  async getAll(): Promise<InventoryMovement[]> { return []; }
+  async getById(id: string): Promise<InventoryMovement | null> { return null; }
+  async create(data: any): Promise<InventoryMovement> { throw new Error('Not implemented'); }
+  async update(id: string, data: any): Promise<InventoryMovement> { throw new Error('Not implemented'); }
+  async delete(id: string): Promise<boolean> { return false; }
+  async getByProduct(productId: string): Promise<InventoryMovement[]> { return []; }
+  async getByDateRange(startDate: Date, endDate: Date, salonId: string): Promise<InventoryMovement[]> { return []; }
 }
 
 class MockNotificationService implements NotificationService {
-  async getAll(): Promise<Notification[]> {
-    return [];
-  }
-
-  async getById(id: string): Promise<Notification | null> {
-    return null;
-  }
-
-  async create(notification: Omit<Notification, 'id' | 'createdAt'>): Promise<Notification> {
-    throw new Error('Not implemented');
-  }
-
-  async markAsRead(id: string): Promise<void> {
-    // Mock implementation
-  }
-
-  async getUnread(): Promise<Notification[]> {
-    return [];
-  }
+  async getAll(): Promise<Notification[]> { return []; }
+  async getById(id: string): Promise<Notification | null> { return null; }
+  async create(data: any): Promise<Notification> { throw new Error('Not implemented'); }
+  async update(id: string, data: any): Promise<Notification> { throw new Error('Not implemented'); }
+  async delete(id: string): Promise<boolean> { return false; }
+  async getUnread(userId: string): Promise<Notification[]> { return []; }
+  async markAsRead(id: string): Promise<Notification> { throw new Error('Not implemented'); }
+  async markAllAsRead(userId: string): Promise<boolean> { return true; }
+  async createLowStockNotification(productId: string): Promise<Notification> { throw new Error('Not implemented'); }
+  async createExpiringNotification(productId: string): Promise<Notification> { throw new Error('Not implemented'); }
 }
 
 class MockKPIService implements KPIService {
   async getMonthlyServicesCount(salonId: string, month: number, year: number): Promise<number> {
     // Mock data for services count - simulate services performed in the month
     // In a real implementation, this would query a services_performed or appointments table
-    const services = await supabase
+    const { data: services } = await supabase
       .from('services')
       .select('*')
       .eq('salon_id', salonId)
       .eq('is_active', true);
     
-    if (services.error) return 0;
+    if (!services) return 0;
     
     // Simulate that each active service was performed multiple times during the month
-    const baseCount = services.data.length * 8; // Each service performed ~8 times per month
+    const baseCount = services.length * 8; // Each service performed ~8 times per month
     const variation = Math.floor(Math.sin(month) * 5); // Add monthly variation
     return Math.max(baseCount + variation, 0);
   }
 
-  async getDashboardKPIs(): Promise<KPIData> {
+  async getDashboardKPIs(salonId: string): Promise<KPIData> {
     try {
       // Get actual data from database
       const [products, services, suppliers] = await Promise.all([
@@ -749,98 +814,55 @@ class MockKPIService implements KPIService {
   }
 }
 
+// Simplified mock implementations for other services
 class MockSalonConfigService implements SalonConfigService {
-  async get(): Promise<SalonConfig> {
-    return {
-      id: '1',
-      salonName: 'Default Salon',
-      address: '',
-      phone: '',
-      email: '',
-      workingHours: {},
-      currency: 'USD',
-      taxRate: 0,
-      salonId: 'default',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-  }
-
-  async update(config: Partial<SalonConfig>): Promise<SalonConfig> {
-    throw new Error('Not implemented');
-  }
+  async getAll(): Promise<SalonConfig[]> { return []; }
+  async getById(id: string): Promise<SalonConfig | null> { return null; }
+  async create(data: any): Promise<SalonConfig> { throw new Error('Not implemented'); }
+  async update(id: string, data: any): Promise<SalonConfig> { throw new Error('Not implemented'); }
+  async delete(id: string): Promise<boolean> { return false; }
+  async getActiveSalons(): Promise<SalonConfig[]> { return []; }
+  async updateSettings(id: string, settings: any): Promise<SalonConfig> { throw new Error('Not implemented'); }
 }
 
 class MockCategoryService implements CategoryService {
-  async getAll(): Promise<Category[]> {
-    return [];
-  }
-
-  async create(category: Omit<Category, 'id'>): Promise<Category> {
-    throw new Error('Not implemented');
-  }
-
-  async update(id: string, category: Partial<Category>): Promise<Category> {
-    throw new Error('Not implemented');
-  }
-
-  async delete(id: string): Promise<void> {
-    // Mock implementation
-  }
+  async getAll(): Promise<Category[]> { return []; }
+  async getById(id: string): Promise<Category | null> { return null; }
+  async create(data: any): Promise<Category> { throw new Error('Not implemented'); }
+  async update(id: string, data: any): Promise<Category> { throw new Error('Not implemented'); }
+  async delete(id: string): Promise<boolean> { return false; }
+  async getByType(type: 'product' | 'service', salonId?: string): Promise<Category[]> { return []; }
+  async getGlobalCategories(): Promise<Category[]> { return []; }
 }
 
 class MockUnitService implements UnitService {
-  async getAll(): Promise<Unit[]> {
-    return [];
-  }
-
-  async create(unit: Omit<Unit, 'id'>): Promise<Unit> {
-    throw new Error('Not implemented');
-  }
-
-  async update(id: string, unit: Partial<Unit>): Promise<Unit> {
-    throw new Error('Not implemented');
-  }
-
-  async delete(id: string): Promise<void> {
-    // Mock implementation
-  }
+  async getAll(): Promise<Unit[]> { return []; }
+  async getById(id: string): Promise<Unit | null> { return null; }
+  async create(data: any): Promise<Unit> { throw new Error('Not implemented'); }
+  async update(id: string, data: any): Promise<Unit> { throw new Error('Not implemented'); }
+  async delete(id: string): Promise<boolean> { return false; }
+  async getActiveUnits(): Promise<Unit[]> { return []; }
 }
 
 class MockUserRoleService implements UserRoleService {
-  async getAll(): Promise<UserRole[]> {
-    return [];
-  }
-
-  async create(role: Omit<UserRole, 'id'>): Promise<UserRole> {
-    throw new Error('Not implemented');
-  }
-
-  async update(id: string, role: Partial<UserRole>): Promise<UserRole> {
-    throw new Error('Not implemented');
-  }
-
-  async delete(id: string): Promise<void> {
-    // Mock implementation
-  }
+  async getAll(): Promise<UserRole[]> { return []; }
+  async getById(id: string): Promise<UserRole | null> { return null; }
+  async create(data: any): Promise<UserRole> { throw new Error('Not implemented'); }
+  async update(id: string, data: any): Promise<UserRole> { throw new Error('Not implemented'); }
+  async delete(id: string): Promise<boolean> { return false; }
+  async getActiveRoles(): Promise<UserRole[]> { return []; }
+  async getByCode(code: string): Promise<UserRole | null> { return null; }
 }
 
 class MockAppConfigService implements AppConfigService {
-  async get(): Promise<AppConfig> {
-    return {
-      id: '1',
-      appName: 'Salon Management',
-      version: '1.0.0',
-      features: {},
-      maintenance: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-  }
-
-  async update(config: Partial<AppConfig>): Promise<AppConfig> {
-    throw new Error('Not implemented');
-  }
+  async getAll(): Promise<AppConfig[]> { return []; }
+  async getById(id: string): Promise<AppConfig | null> { return null; }
+  async create(data: any): Promise<AppConfig> { throw new Error('Not implemented'); }
+  async update(id: string, data: any): Promise<AppConfig> { throw new Error('Not implemented'); }
+  async delete(id: string): Promise<boolean> { return false; }
+  async getByKey(key: string): Promise<AppConfig | null> { return null; }
+  async getPublicConfigs(): Promise<AppConfig[]> { return []; }
+  async setConfig(key: string, value: string, type?: string): Promise<AppConfig> { throw new Error('Not implemented'); }
 }
 
 // Export the Supabase data provider
