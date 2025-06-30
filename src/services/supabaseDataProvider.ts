@@ -595,21 +595,88 @@ class MockNotificationService implements NotificationService {
 
 class MockKPIService implements KPIService {
   async getDashboardKPIs(salonId: string): Promise<KPIData> {
-    // This would be implemented with actual Supabase queries
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+    
+    const previousMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+    const previousYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+    
+    const monthlyRevenue = await this.getMonthlyRevenue(salonId, currentMonth, currentYear);
+    const monthlyExpenses = await this.getMonthlyExpenses(salonId, currentMonth, currentYear);
+    const previousMonthlyRevenue = await this.getMonthlyRevenue(salonId, previousMonth, previousYear);
+    const previousMonthlyExpenses = await this.getMonthlyExpenses(salonId, previousMonth, previousYear);
+    
+    // Calculate percentage changes
+    const revenueChangePercentage = previousMonthlyRevenue > 0 
+      ? ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) * 100 
+      : 0;
+    const expensesChangePercentage = previousMonthlyExpenses > 0 
+      ? ((monthlyExpenses - previousMonthlyExpenses) / previousMonthlyExpenses) * 100 
+      : 0;
+    
     return {
       totalProducts: 0,
       lowStockItems: 0,
       expiringItems: 0,
       totalServices: 0,
       totalSuppliers: 0,
-      monthlyExpenses: 0,
-      monthlyRevenue: 0,
+      monthlyExpenses,
+      monthlyRevenue,
       profitMargin: 0,
+      previousMonthlyRevenue,
+      previousMonthlyExpenses,
+      revenueChangePercentage,
+      expensesChangePercentage,
     };
   }
 
-  async getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number> { return 0; }
-  async getMonthlyExpenses(salonId: string, month: number, year: number): Promise<number> { return 0; }
+  async getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number> {
+    // Calculate revenue based on services created in the specified month/year
+    // Note: This is a simplified calculation. In a real scenario, you would have
+    // a separate transactions/appointments table to track actual service sales
+    const { data, error } = await supabase
+      .from('services')
+      .select('price, created_at')
+      .eq('salon_id', salonId)
+      .eq('is_active', true)
+      .gte('created_at', `${year}-${month.toString().padStart(2, '0')}-01`)
+      .lt('created_at', month === 12 ? `${year + 1}-01-01` : `${year}-${(month + 1).toString().padStart(2, '0')}-01`);
+    
+    if (error) {
+      console.error('Error calculating monthly revenue:', error);
+      return 0;
+    }
+    
+    // For demo purposes, we'll simulate that each service was sold once
+    // In a real application, you would have actual sales/appointment data
+    return data.reduce((total, service) => total + service.price, 0);
+  }
+  
+  async getMonthlyExpenses(salonId: string, month: number, year: number): Promise<number> {
+    // Note: Since we don't have a purchases/expenses table in the current schema,
+    // we'll calculate estimated expenses based on product costs
+    // In a real application, you would have actual expense tracking
+    
+    const { data, error } = await supabase
+      .from('products')
+      .select('unit_price, stock, min_stock')
+      .eq('salon_id', salonId);
+    
+    if (error) {
+      console.error('Error calculating monthly expenses:', error);
+      return 0;
+    }
+    
+    // Estimate monthly expenses as a percentage of inventory value
+    // This is a simplified calculation for demonstration
+    const totalInventoryValue = data.reduce((total, product) => 
+      total + (product.unit_price * product.stock), 0
+    );
+    
+    // Assume monthly expenses are roughly 15% of inventory value
+    return totalInventoryValue * 0.15;
+  }
   async getProfitMargin(salonId: string, month: number, year: number): Promise<number> { return 0; }
 }
 

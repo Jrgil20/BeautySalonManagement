@@ -320,6 +320,16 @@ class MockKPIService implements KPIService {
     const services = mockServices.filter(s => s.salonId === salonId);
     const suppliers = mockSuppliers.filter(s => s.salonId === salonId);
     
+    // Mock data for current and previous month
+    const monthlyRevenue = 15000;
+    const monthlyExpenses = 8500;
+    const previousMonthlyRevenue = 13500;
+    const previousMonthlyExpenses = 7800;
+    
+    // Calculate percentage changes
+    const revenueChangePercentage = ((monthlyRevenue - previousMonthlyRevenue) / previousMonthlyRevenue) * 100;
+    const expensesChangePercentage = ((monthlyExpenses - previousMonthlyExpenses) / previousMonthlyExpenses) * 100;
+    
     return {
       totalProducts: products.length,
       lowStockItems: products.filter(p => p.stock <= p.minStock).length,
@@ -329,14 +339,29 @@ class MockKPIService implements KPIService {
       }).length,
       totalServices: services.length,
       totalSuppliers: suppliers.length,
-      monthlyExpenses: 8500,
-      monthlyRevenue: 15000,
+      monthlyExpenses,
+      monthlyRevenue,
       profitMargin: 43.3,
+      previousMonthlyRevenue,
+      previousMonthlyExpenses,
+      revenueChangePercentage,
+      expensesChangePercentage,
     };
   }
 
-  async getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number> { return 15000; }
-  async getMonthlyExpenses(salonId: string, month: number, year: number): Promise<number> { return 8500; }
+  async getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number> { 
+    // Mock data varies by month for demonstration
+    const baseRevenue = 15000;
+    const variation = Math.sin(month) * 2000; // Simulate seasonal variation
+    return Math.max(baseRevenue + variation, 5000);
+  }
+  
+  async getMonthlyExpenses(salonId: string, month: number, year: number): Promise<number> { 
+    // Mock data varies by month for demonstration
+    const baseExpenses = 8500;
+    const variation = Math.sin(month + 1) * 1000; // Simulate seasonal variation
+    return Math.max(baseExpenses + variation, 3000);
+  }
   async getProfitMargin(salonId: string, month: number, year: number): Promise<number> { return 43.3; }
 }
 

@@ -65,7 +65,7 @@ export function Dashboard() {
     title: string;
     value: number | string;
     icon: React.ElementType;
-    trend?: 'up' | 'down';
+    trend?: 'up' | 'down' | number;
     color: string;
     onClick?: () => void;
   }) => (
@@ -86,13 +86,20 @@ export function Dashboard() {
       </header>
       {trend && (
         <footer className="flex items-center mt-4">
-          {trend === 'up' ? (
+          {(trend === 'up' || (typeof trend === 'number' && trend > 0)) ? (
             <TrendingUp className="w-4 h-4 text-green-500 mr-1" aria-hidden="true" />
-          ) : (
+          ) : (trend === 'down' || (typeof trend === 'number' && trend < 0)) ? (
             <TrendingDown className="w-4 h-4 text-red-500 mr-1" aria-hidden="true" />
+          ) : null}
+          <span className={`text-sm font-medium ${
+            (trend === 'up' || (typeof trend === 'number' && trend > 0)) ? 'text-green-500' : 
+            (trend === 'down' || (typeof trend === 'number' && trend < 0)) ? 'text-red-500' : 'text-gray-500'
+          }`}>
+            {typeof trend === 'number' ? (
+              `${trend > 0 ? '+' : ''}${trend.toFixed(1)}% vs mes anterior`
+            ) : (
+              trend === 'up' ? '+12% vs mes anterior' : '-5% vs mes anterior'
           )}
-          <span className={`text-sm font-medium ${trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-            {trend === 'up' ? '+12%' : '-5%'} vs mes anterior
           </span>
         </footer>
       )}
@@ -160,13 +167,14 @@ export function Dashboard() {
           title="Ingresos Mensuales"
           value={`$${monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
-          trend="up"
+          trend={state.kpis.revenueChangePercentage}
           color="bg-gradient-to-r from-green-500 to-emerald-600"
         />
         <StatCard
           title="Gastos Mensuales"
           value={`$${monthlyExpenses.toLocaleString()}`}
           icon={TrendingDown}
+          trend={state.kpis.expensesChangePercentage}
           color="bg-gradient-to-r from-red-500 to-pink-600"
         />
         <StatCard
