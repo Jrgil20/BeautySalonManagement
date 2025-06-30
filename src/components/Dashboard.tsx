@@ -164,7 +164,7 @@ export function Dashboard() {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6" aria-labelledby="financial-heading">
         <h2 id="financial-heading" className="sr-only">Indicadores financieros</h2>
         <StatCard
-          title="Ingresos Mensuales"
+          title="Ingresos por Servicios"
           value={`$${monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           trend={state.kpis.revenueChangePercentage}
@@ -235,7 +235,7 @@ export function Dashboard() {
 
       {/* Revenue Chart */}
       <section className="bg-white rounded-xl shadow-lg p-6" aria-labelledby="revenue-heading">
-        <h2 id="revenue-heading" className="text-lg font-semibold text-gray-900 mb-4">Ingresos vs Gastos</h2>
+        <h2 id="revenue-heading" className="text-lg font-semibold text-gray-900 mb-4">Ingresos por Servicios vs Gastos</h2>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={revenueData}>
@@ -248,7 +248,7 @@ export function Dashboard() {
                 dataKey="revenue" 
                 stroke="#10b981" 
                 strokeWidth={3}
-                name="Ingresos"
+                name="Ingresos por Servicios"
               />
               <Line 
                 type="monotone" 

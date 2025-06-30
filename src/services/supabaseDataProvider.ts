@@ -632,25 +632,30 @@ class MockKPIService implements KPIService {
   }
 
   async getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number> {
-    // Calculate revenue based on services created in the specified month/year
-    // Note: This is a simplified calculation. In a real scenario, you would have
-    // a separate transactions/appointments table to track actual service sales
+    // Calculate revenue based on services available in the salon
+    // Note: This simulates revenue from services performed during the month
+    // In a real application, you would have actual sales/appointment data
     const { data, error } = await supabase
       .from('services')
       .select('price, created_at')
       .eq('salon_id', salonId)
-      .eq('is_active', true)
-      .gte('created_at', `${year}-${month.toString().padStart(2, '0')}-01`)
-      .lt('created_at', month === 12 ? `${year + 1}-01-01` : `${year}-${(month + 1).toString().padStart(2, '0')}-01`);
+      .eq('is_active', true);
     
     if (error) {
       console.error('Error calculating monthly revenue:', error);
       return 0;
     }
     
-    // For demo purposes, we'll simulate that each service was sold once
-    // In a real application, you would have actual sales/appointment data
-    return data.reduce((total, service) => total + service.price, 0);
+    // Simulate monthly revenue based on available services
+    // This estimates that each service is performed a certain number of times per month
+    const baseMultiplier = Math.sin(month) + 2; // Varies by month (1-3 times per service)
+    const monthlyRevenue = data.reduce((total, service) => {
+      // Simulate different service frequencies based on price
+      const frequency = service.price > 100 ? baseMultiplier * 0.5 : baseMultiplier;
+      return total + (service.price * Math.max(1, Math.floor(frequency)));
+    }, 0);
+    
+    return monthlyRevenue;
   }
   
   async getMonthlyExpenses(salonId: string, month: number, year: number): Promise<number> {

@@ -350,9 +350,9 @@ class MockKPIService implements KPIService {
   }
 
   async getMonthlyRevenue(salonId: string, month: number, year: number): Promise<number> { 
-    // Mock data varies by month for demonstration
+    // Simula ingresos por servicios realizados durante el mes
     const baseRevenue = 15000;
-    const variation = Math.sin(month) * 2000; // Simulate seasonal variation
+    const variation = Math.sin(month) * 2000; // Simula variación estacional
     return Math.max(baseRevenue + variation, 5000);
   }
   
