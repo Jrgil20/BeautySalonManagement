@@ -171,13 +171,13 @@ export function LandingPage() {
         href="https://bolt.new/"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-8 right-8 flex items-center justify-center w-20 h-20 hover:scale-110 transition-transform duration-200 z-50 drop-shadow-2xl"
+        className="fixed bottom-8 right-8 flex items-center justify-center w-30 h-30 hover:scale-110 transition-transform duration-200 z-50 drop-shadow-2xl"
         aria-label="Powered by Bolt.new"
       >
         <img
           src="/white_circle_360x360.png"
           alt="Powered by Bolt.new"
-          className="w-16 h-16"
+          className="w-24 h-24"
         />
       </a>
 
